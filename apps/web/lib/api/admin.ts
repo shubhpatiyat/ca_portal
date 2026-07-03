@@ -205,6 +205,24 @@ export const adminApi = {
     }
   },
   signUp: async (email: string, password: string) => {
+    const redirectTo =
+      typeof window === "undefined" ? undefined : `${window.location.origin}/auth/callback?next=/admin/onboarding`;
+
+    if (apiBaseUrl && redirectTo) {
+      const response = await fetch(`${apiBaseUrl}/api/v1/auth/signup-link`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ email, password, redirect_to: redirectTo })
+      });
+
+      if (!response.ok) {
+        const message = await response.text().catch(() => "");
+        throw new Error(message || `Signup request failed with ${response.status}`);
+      }
+
+      return response.json() as Promise<{ action_link: string }>;
+    }
+
     const supabase = createBrowserSupabaseClient();
     if (!supabase) {
       throw new Error("Supabase URL and anon key are required for browser registration.");
@@ -213,8 +231,7 @@ export const adminApi = {
       email,
       password,
       options: {
-        emailRedirectTo:
-          typeof window === "undefined" ? undefined : `${window.location.origin}/auth/callback?next=/admin/onboarding`
+        emailRedirectTo: redirectTo
       }
     });
     if (error) {

@@ -64,6 +64,16 @@ class OnboardingRequest(BaseModel):
     themeKey: Literal["navy_gold", "emerald_cream", "charcoal_blue"]
 
 
+class SignupLinkRequest(BaseModel):
+    email: EmailStr
+    password: Annotated[str, StringConstraints(min_length=8, max_length=128)]
+    redirect_to: str
+
+
+class SignupLinkOut(BaseModel):
+    action_link: str
+
+
 class OnboardingOut(BaseModel):
     organization_slug: str
     default_subdomain: str | None = None

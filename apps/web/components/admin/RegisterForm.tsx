@@ -33,6 +33,10 @@ export function RegisterForm() {
     startTransition(async () => {
       try {
         const result = await adminApi.signUp(email, password);
+        if ("action_link" in result) {
+          window.location.assign(result.action_link);
+          return;
+        }
         if (result.hasSession) {
           router.push("/admin/onboarding");
           router.refresh();
