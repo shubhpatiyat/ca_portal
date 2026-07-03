@@ -24,6 +24,16 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=API_DIR / ".env", env_file_encoding="utf-8", extra="ignore")
 
     @property
+    def sqlalchemy_database_url(self) -> str:
+        if self.database_url.startswith("postgresql+psycopg://"):
+            return self.database_url
+        if self.database_url.startswith("postgresql://"):
+            return self.database_url.replace("postgresql://", "postgresql+psycopg://", 1)
+        if self.database_url.startswith("postgres://"):
+            return self.database_url.replace("postgres://", "postgresql+psycopg://", 1)
+        return self.database_url
+
+    @property
     def cors_origin_list(self) -> list[str]:
         return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
 
