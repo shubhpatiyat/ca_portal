@@ -39,6 +39,25 @@ export function AuthCallback() {
         }
       }
 
+      if (typeof window !== "undefined" && window.location.hash) {
+        const hashParams = new URLSearchParams(window.location.hash.slice(1));
+        const accessToken = hashParams.get("access_token");
+        const refreshToken = hashParams.get("refresh_token");
+
+        if (accessToken && refreshToken) {
+          const { error: sessionError } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken
+          });
+          if (sessionError) {
+            if (mounted) {
+              setError(sessionError.message);
+            }
+            return;
+          }
+        }
+      }
+
       if (mounted) {
         router.replace(next);
         router.refresh();

@@ -31,7 +31,7 @@ def signup_link(
             "type": "signup",
             "email": str(payload.email),
             "password": payload.password,
-            "options": {"redirect_to": payload.redirect_to},
+            "redirect_to": payload.redirect_to,
         },
         timeout=10,
     )
