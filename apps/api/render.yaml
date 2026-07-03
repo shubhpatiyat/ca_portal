@@ -23,6 +23,8 @@ services:
         value: authenticated
       - key: CORS_ORIGINS
         sync: false
+      - key: CORS_ALLOW_ORIGIN_REGEX
+        sync: false
       - key: NEXT_REVALIDATE_URL
         sync: false
       - key: NEXT_REVALIDATE_SECRET

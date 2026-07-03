@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     supabase_jwt_issuer: str | None = None
     supabase_jwt_audience: str = "authenticated"
     cors_origins: str = "http://localhost:3000"
+    cors_allow_origin_regex_value: str | None = Field(default=None, alias="CORS_ALLOW_ORIGIN_REGEX")
     next_revalidate_url: AnyHttpUrl | None = None
     next_revalidate_secret: str | None = None
     platform_domain: str = "lvh.me"
@@ -39,6 +40,8 @@ class Settings(BaseSettings):
 
     @property
     def cors_allow_origin_regex(self) -> str | None:
+        if self.cors_allow_origin_regex_value:
+            return self.cors_allow_origin_regex_value
         if self.app_env == "development":
             return r"^https?://(localhost|127\.0\.0\.1):\d+$"
         return None
