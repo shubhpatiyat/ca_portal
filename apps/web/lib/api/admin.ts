@@ -214,7 +214,7 @@ export const adminApi = {
       password,
       options: {
         emailRedirectTo:
-          typeof window === "undefined" ? undefined : `${window.location.origin}/admin/onboarding`
+          typeof window === "undefined" ? undefined : `${window.location.origin}/auth/callback?next=/admin/onboarding`
       }
     });
     if (error) {
