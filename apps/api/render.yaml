@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: ca-site-platform-api
+    runtime: python
+    plan: starter
+    rootDir: apps/api
+    buildCommand: "pip install -r requirements.txt && alembic upgrade head"
+    startCommand: "uvicorn app.main:app --host 0.0.0.0 --port $PORT"
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: SUPABASE_JWT_ISSUER
+        sync: false
+      - key: SUPABASE_JWT_AUDIENCE
+        value: authenticated
+      - key: CORS_ORIGINS
+        sync: false
+      - key: NEXT_REVALIDATE_URL
+        sync: false
+      - key: NEXT_REVALIDATE_SECRET
+        sync: false
+      - key: LOG_LEVEL
+        value: INFO

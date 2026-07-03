@@ -1,0 +1,19 @@
+{
+  "name": "ca-site-platform",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/web"
+  ],
+  "scripts": {
+    "dev:web": "npm --workspace apps/web run dev",
+    "build:web": "npm --workspace apps/web run build",
+    "lint:web": "npm --workspace apps/web run lint",
+    "test:api": "PYTHONPATH=apps/api python -m pytest apps/api/app/tests",
+    "dev:api": "uvicorn app.main:app --reload --app-dir apps/api"
+  },
+  "engines": {
+    "node": ">=20.11.0",
+    "python": ">=3.10"
+  }
+}
