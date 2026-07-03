@@ -233,7 +233,7 @@ function TrustStatsFields({ section, onChange }: { section: TrustStatsSection; o
     <>
       <TextField label="Section heading" value={content.heading} onChange={(heading) => onChange({ ...section, content_json: { ...content, heading } })} />
       {content.stats.map((stat, index) => (
-        <div className="grid gap-3 rounded-md border bg-background p-4 md:grid-cols-2" key={`${stat.label}-${index}`}>
+        <div className="grid gap-3 rounded-md border bg-background p-4 md:grid-cols-2" key={index}>
           <TextField label={`Proof ${index + 1} value`} value={stat.value} onChange={(value) => {
             const stats = content.stats.map((item, itemIndex) => (itemIndex === index ? { ...item, value } : item));
             onChange({ ...section, content_json: { ...content, stats } });
@@ -284,7 +284,7 @@ function ServiceFields({ section, onChange }: { section: ServiceGridSection; onC
       <TextField label="Heading" value={content.heading} onChange={(heading) => onChange({ ...section, content_json: { ...content, heading } })} />
       <TextField label="Subheading" multiline value={content.subheading ?? ""} onChange={(subheading) => onChange({ ...section, content_json: { ...content, subheading } })} />
       {content.services.map((service, index) => (
-        <div className="grid gap-3 rounded-md border bg-background p-4" key={`${service.title}-${index}`}>
+        <div className="grid gap-3 rounded-md border bg-background p-4" key={index}>
           <TextField label={`Service ${index + 1} name`} value={service.title} onChange={(title) => {
             const services = content.services.map((item, itemIndex) => (itemIndex === index ? { ...item, title } : item));
             onChange({ ...section, content_json: { ...content, services } });
@@ -351,7 +351,7 @@ function FaqFields({ section, onChange }: { section: FaqSection; onChange: (sect
     <>
       <TextField label="Heading" value={content.heading} onChange={(heading) => onChange({ ...section, content_json: { ...content, heading } })} />
       {content.items.map((item, index) => (
-        <div className="grid gap-3 rounded-md border bg-background p-4" key={`${item.question}-${index}`}>
+        <div className="grid gap-3 rounded-md border bg-background p-4" key={index}>
           <TextField label={`Question ${index + 1}`} value={item.question} onChange={(question) => {
             const items = content.items.map((current, itemIndex) => (itemIndex === index ? { ...current, question } : current));
             onChange({ ...section, content_json: { ...content, items } });
@@ -389,7 +389,7 @@ function TestimonialsFields({ section, onChange }: { section: TestimonialsSectio
     <>
       <TextField label="Heading" value={content.heading} onChange={(heading) => onChange({ ...section, content_json: { ...content, heading } })} />
       {content.testimonials.map((testimonial, index) => (
-        <div className="grid gap-3 rounded-md border bg-background p-4" key={`${testimonial.name}-${index}`}>
+        <div className="grid gap-3 rounded-md border bg-background p-4" key={index}>
           <TextField label={`Client ${index + 1} name`} value={testimonial.name} onChange={(name) => {
             const testimonials = content.testimonials.map((item, itemIndex) => (itemIndex === index ? { ...item, name } : item));
             onChange({ ...section, content_json: { ...content, testimonials } });

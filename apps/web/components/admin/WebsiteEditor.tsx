@@ -396,9 +396,14 @@ export function WebsiteEditor() {
   const [actionError, setActionError] = useState<string | null>(null);
   const [publishedAt, setPublishedAt] = useState("");
   const [showRecommendedConfirm, setShowRecommendedConfirm] = useState(false);
+  const [sectionPendingRemovalId, setSectionPendingRemovalId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const sortedSections = useMemo(() => [...sections].sort((a, b) => a.position - b.position), [sections]);
+  const sectionPendingRemoval = useMemo(
+    () => sortedSections.find((section) => section.id === sectionPendingRemovalId) ?? null,
+    [sectionPendingRemovalId, sortedSections]
+  );
   const readiness = useMemo(() => buildReadiness(sortedSections), [sortedSections]);
   const missingRequired = requiredTypes.filter((type) => !hasVisibleType(sortedSections, type));
   const missingRecommended = recommendedTypes.filter((type) => !hasVisibleType(sortedSections, type));
@@ -449,6 +454,12 @@ export function WebsiteEditor() {
     }
   }, [dirty, pageQuery.data]);
 
+  useEffect(() => {
+    if (sectionPendingRemovalId && !sectionPendingRemoval) {
+      setSectionPendingRemovalId(null);
+    }
+  }, [sectionPendingRemoval, sectionPendingRemovalId]);
+
   function updateSections(nextSections: PageSection[]) {
     setSections(nextSections.map((section, index) => ({ ...section, position: index + 1 })));
     setDirty(true);
@@ -472,10 +483,16 @@ export function WebsiteEditor() {
     );
   }
 
-  function remove(sectionId: string) {
-    if (window.confirm("Remove this section from the draft?")) {
-      updateSections(sortedSections.filter((section) => section.id !== sectionId));
+  function requestRemove(sectionId: string) {
+    setSectionPendingRemovalId(sectionId);
+  }
+
+  function confirmRemove() {
+    if (!sectionPendingRemovalId) {
+      return;
     }
+    updateSections(sortedSections.filter((section) => section.id !== sectionPendingRemovalId));
+    setSectionPendingRemovalId(null);
   }
 
   function addFaq() {
@@ -619,6 +636,40 @@ export function WebsiteEditor() {
               </Button>
               <Button type="button" onClick={applyRecommendedLayout} disabled={!recommendedAdditions.length}>
                 Add Sections
+              </Button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {sectionPendingRemoval ? (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-primary/55 px-4 py-6" role="presentation">
+          <div
+            aria-describedby="remove-section-description"
+            aria-labelledby="remove-section-title"
+            aria-modal="true"
+            className="w-full max-w-md rounded-lg border bg-card p-5 shadow-2xl"
+            role="dialog"
+          >
+            <div className="flex items-start gap-3">
+              <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-destructive/10 text-destructive">
+                <Trash2 size={18} aria-hidden="true" />
+              </div>
+              <div>
+                <h2 className="font-semibold text-primary" id="remove-section-title">
+                  Remove {sectionGuides[sectionPendingRemoval.section_type].label}?
+                </h2>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground" id="remove-section-description">
+                  This removes the section from your draft. The published website changes only after you publish.
+                </p>
+              </div>
+            </div>
+            <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+              <Button variant="outline" type="button" onClick={() => setSectionPendingRemovalId(null)}>
+                Cancel
+              </Button>
+              <Button className="bg-destructive text-destructive-foreground hover:bg-destructive/90" type="button" onClick={confirmRemove}>
+                Remove Section
               </Button>
             </div>
           </div>
@@ -783,7 +834,7 @@ export function WebsiteEditor() {
                     <Link className="rounded-md border px-3 py-2 text-sm font-semibold" href={`/admin/website/sections/${section.id}`}>
                       Edit
                     </Link>
-                    <button className="rounded-md border p-2 text-destructive" type="button" onClick={() => remove(section.id)} aria-label="Remove section">
+                    <button className="rounded-md border p-2 text-destructive" type="button" onClick={() => requestRemove(section.id)} aria-label="Remove section">
                       <Trash2 size={16} />
                     </button>
                   </div>
