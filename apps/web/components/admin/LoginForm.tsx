@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { adminApi } from "@/lib/api/admin";
+import { isLocalDevHost } from "@/lib/auth/supabase";
 import { Button } from "@/components/ui/Button";
 
 export function LoginForm() {
@@ -12,7 +13,7 @@ export function LoginForm() {
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const next = searchParams.get("next") ?? "/admin/dashboard";
-  const hasDevAuth = Boolean(process.env.NEXT_PUBLIC_DEV_AUTH_USER_ID);
+  const hasDevAuth = Boolean(process.env.NEXT_PUBLIC_DEV_AUTH_USER_ID) && isLocalDevHost();
 
   function continueWithDevAuth() {
     router.push(next);

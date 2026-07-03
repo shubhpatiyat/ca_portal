@@ -33,7 +33,7 @@ class SupabaseJWTVerifier:
             claims = jwt.decode(
                 token,
                 signing_key.key,
-                algorithms=["RS256"],
+                algorithms=["ES256", "RS256"],
                 audience=self.settings.supabase_jwt_audience,
                 issuer=self.settings.supabase_jwt_issuer,
             )

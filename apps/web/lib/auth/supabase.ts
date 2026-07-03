@@ -2,6 +2,13 @@ import { createClient } from "@supabase/supabase-js";
 
 let browserClient: ReturnType<typeof createClient> | null = null;
 
+export function isLocalDevHost(): boolean {
+  if (typeof window === "undefined") {
+    return false;
+  }
+  return ["localhost", "127.0.0.1", "0.0.0.0"].includes(window.location.hostname);
+}
+
 export function createBrowserSupabaseClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -16,7 +23,7 @@ export function createBrowserSupabaseClient() {
 
 export async function getSupabaseAccessToken(): Promise<string | null> {
   const devUserId = process.env.NEXT_PUBLIC_DEV_AUTH_USER_ID;
-  if (devUserId) {
+  if (devUserId && isLocalDevHost()) {
     return `dev.${devUserId}`;
   }
 
