@@ -88,8 +88,8 @@ export default async function HostTenantSitePage({ params }: PageProps) {
       </div>
     );
   } catch {
-    if (isWorkspaceHost(host)) {
-      redirect("/s/sharma-associates");
+    if (isWorkspaceHost(host) && pageSlug === "home") {
+      redirect("/admin/login");
     }
     notFound();
   }

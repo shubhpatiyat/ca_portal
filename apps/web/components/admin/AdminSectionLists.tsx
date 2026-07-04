@@ -1,7 +1,9 @@
 "use client";
 
+import { useEffect, useState, useTransition } from "react";
 import { useQuery } from "@tanstack/react-query";
-import type { FaqSection, ServiceGridSection } from "@/types/site";
+import { useQueryClient } from "@tanstack/react-query";
+import type { FaqSection, PageSection, ServiceGridSection, TestimonialsSection } from "@/types/site";
 import { adminApi } from "@/lib/api/admin";
 
 export function ServicesFromApi() {
@@ -11,8 +13,8 @@ export function ServicesFromApi() {
   return (
     <div className="grid gap-6">
       <h1 className="font-serif text-3xl font-bold text-primary">Services</h1>
-      {pageQuery.isLoading ? <p className="text-muted-foreground">Loading services from the API...</p> : null}
-      {pageQuery.isError ? <p className="text-destructive">Could not load services from the API.</p> : null}
+      {pageQuery.isLoading ? <p className="text-muted-foreground">Loading services...</p> : null}
+      {pageQuery.isError ? <p className="text-destructive">Could not load services. Please refresh and try again.</p> : null}
       <div className="grid gap-3 md:grid-cols-2">
         {serviceSection?.content_json.services.map((service) => (
           <div className="rounded-lg border bg-card p-5" key={service.title}>
@@ -26,24 +28,269 @@ export function ServicesFromApi() {
 }
 
 export function FaqsFromApi() {
+  const queryClient = useQueryClient();
   const pageQuery = useQuery({ queryKey: ["admin-page", "home"], queryFn: adminApi.homePage, retry: false });
   const faqSection = pageQuery.data?.sections.find((section): section is FaqSection => section.section_type === "faq");
+  const [heading, setHeading] = useState("Frequently asked questions");
+  const [isVisible, setIsVisible] = useState(true);
+  const [items, setItems] = useState<Array<{ question: string; answer: string }>>([]);
+  const [message, setMessage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
+
+  useEffect(() => {
+    if (!faqSection) {
+      return;
+    }
+    setHeading(faqSection.content_json.heading);
+    setIsVisible(faqSection.is_visible);
+    setItems(faqSection.content_json.items);
+  }, [faqSection]);
+
+  function saveFaqs() {
+    if (!pageQuery.data) {
+      return;
+    }
+    setMessage(null);
+    setError(null);
+    startTransition(async () => {
+      try {
+        await adminApi.updateDraft(upsertFaqSection(pageQuery.data.sections, faqSection, heading, items, isVisible));
+        await queryClient.invalidateQueries({ queryKey: ["admin-page", "home"] });
+        setMessage("FAQs saved.");
+      } catch (caught) {
+        setError(caught instanceof Error ? caught.message : "Could not save FAQs.");
+      }
+    });
+  }
 
   return (
     <div className="grid gap-6">
-      <h1 className="font-serif text-3xl font-bold text-primary">FAQs</h1>
-      {pageQuery.isLoading ? <p className="text-muted-foreground">Loading FAQs from the API...</p> : null}
-      {pageQuery.isError ? <p className="text-destructive">Could not load FAQs from the API.</p> : null}
-      <div className="divide-y rounded-lg border bg-card">
-        {faqSection?.content_json.items.map((item) => (
-          <div className="p-5" key={item.question}>
-            <h2 className="font-semibold text-primary">{item.question}</h2>
-            <p className="mt-2 text-sm leading-6 text-muted-foreground">{item.answer}</p>
-          </div>
-        ))}
+      <div>
+        <h1 className="font-serif text-3xl font-bold text-primary">FAQs</h1>
+        <p className="mt-2 text-muted-foreground">Add, edit, hide or remove public questions from one place.</p>
+      </div>
+      {pageQuery.isLoading ? <p className="text-muted-foreground">Loading FAQs...</p> : null}
+      {pageQuery.isError ? <p className="text-destructive">Could not load FAQs. Please refresh and try again.</p> : null}
+      <div className="rounded-lg border bg-card p-5">
+        <div className="grid gap-4 md:grid-cols-[1fr_auto] md:items-end">
+          <label className="grid gap-2 text-sm font-medium">
+            Section heading
+            <input className="min-h-11 rounded-md border bg-background px-3" value={heading} onChange={(event) => setHeading(event.target.value)} />
+          </label>
+          <label className="flex min-h-11 items-center gap-2 rounded-md border bg-background px-3 text-sm font-medium">
+            <input checked={isVisible} type="checkbox" onChange={(event) => setIsVisible(event.target.checked)} />
+            Show on website
+          </label>
+        </div>
+        <div className="mt-5 grid gap-4">
+          {items.map((item, index) => (
+            <div className="grid gap-3 rounded-md border bg-background p-4" key={index}>
+              <label className="grid gap-2 text-sm font-medium">
+                Question
+                <input
+                  className="min-h-11 rounded-md border px-3"
+                  value={item.question}
+                  onChange={(event) =>
+                    setItems((current) => current.map((faq, itemIndex) => (itemIndex === index ? { ...faq, question: event.target.value } : faq)))
+                  }
+                />
+              </label>
+              <label className="grid gap-2 text-sm font-medium">
+                Answer
+                <textarea
+                  className="min-h-28 rounded-md border px-3 py-2"
+                  value={item.answer}
+                  onChange={(event) =>
+                    setItems((current) => current.map((faq, itemIndex) => (itemIndex === index ? { ...faq, answer: event.target.value } : faq)))
+                  }
+                />
+              </label>
+              <button className="w-fit rounded-md border px-3 py-2 text-sm font-semibold text-destructive" type="button" onClick={() => setItems((current) => current.filter((_, itemIndex) => itemIndex !== index))}>
+                Delete question
+              </button>
+            </div>
+          ))}
+        </div>
+        <div className="mt-5 flex flex-wrap gap-3">
+          <button className="rounded-md border px-4 py-2 text-sm font-semibold" type="button" onClick={() => setItems((current) => [...current, { question: "", answer: "" }])}>
+            Add question
+          </button>
+          <button className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-60" type="button" disabled={isPending} onClick={saveFaqs}>
+            {isPending ? "Saving..." : "Save FAQs"}
+          </button>
+        </div>
+        {message ? <p className="mt-4 text-sm font-medium text-accent">{message}</p> : null}
+        {error ? <p className="mt-4 text-sm font-medium text-destructive">{error}</p> : null}
       </div>
     </div>
   );
+}
+
+export function ReviewsFromApi() {
+  const queryClient = useQueryClient();
+  const pageQuery = useQuery({ queryKey: ["admin-page", "home"], queryFn: adminApi.homePage, retry: false });
+  const testimonialsSection = pageQuery.data?.sections.find((section): section is TestimonialsSection => section.section_type === "testimonials");
+  const [heading, setHeading] = useState("Client reviews");
+  const [isVisible, setIsVisible] = useState(true);
+  const [testimonials, setTestimonials] = useState<Array<{ name: string; role: string; quote: string }>>([]);
+  const [message, setMessage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
+
+  useEffect(() => {
+    if (!testimonialsSection) {
+      return;
+    }
+    setHeading(testimonialsSection.content_json.heading);
+    setIsVisible(testimonialsSection.is_visible);
+    setTestimonials(testimonialsSection.content_json.testimonials);
+  }, [testimonialsSection]);
+
+  function saveReviews() {
+    if (!pageQuery.data) {
+      return;
+    }
+    setMessage(null);
+    setError(null);
+    startTransition(async () => {
+      try {
+        await adminApi.updateDraft(upsertTestimonialsSection(pageQuery.data.sections, testimonialsSection, heading, testimonials, isVisible));
+        await queryClient.invalidateQueries({ queryKey: ["admin-page", "home"] });
+        setMessage("Reviews saved.");
+      } catch (caught) {
+        setError(caught instanceof Error ? caught.message : "Could not save reviews.");
+      }
+    });
+  }
+
+  return (
+    <div className="grid gap-6">
+      <div>
+        <h1 className="font-serif text-3xl font-bold text-primary">Client Reviews</h1>
+        <p className="mt-2 text-muted-foreground">Add, edit, hide or remove testimonials shown on the public website.</p>
+      </div>
+      {pageQuery.isLoading ? <p className="text-muted-foreground">Loading reviews...</p> : null}
+      {pageQuery.isError ? <p className="text-destructive">Could not load reviews. Please refresh and try again.</p> : null}
+      <div className="rounded-lg border bg-card p-5">
+        <div className="grid gap-4 md:grid-cols-[1fr_auto] md:items-end">
+          <label className="grid gap-2 text-sm font-medium">
+            Section heading
+            <input className="min-h-11 rounded-md border bg-background px-3" value={heading} onChange={(event) => setHeading(event.target.value)} />
+          </label>
+          <label className="flex min-h-11 items-center gap-2 rounded-md border bg-background px-3 text-sm font-medium">
+            <input checked={isVisible} type="checkbox" onChange={(event) => setIsVisible(event.target.checked)} />
+            Show on website
+          </label>
+        </div>
+        <div className="mt-5 grid gap-4">
+          {testimonials.map((testimonial, index) => (
+            <div className="grid gap-3 rounded-md border bg-background p-4" key={index}>
+              <div className="grid gap-3 md:grid-cols-2">
+                <label className="grid gap-2 text-sm font-medium">
+                  Client name
+                  <input
+                    className="min-h-11 rounded-md border px-3"
+                    value={testimonial.name}
+                    onChange={(event) =>
+                      setTestimonials((current) => current.map((review, itemIndex) => (itemIndex === index ? { ...review, name: event.target.value } : review)))
+                    }
+                  />
+                </label>
+                <label className="grid gap-2 text-sm font-medium">
+                  Role or company
+                  <input
+                    className="min-h-11 rounded-md border px-3"
+                    value={testimonial.role}
+                    onChange={(event) =>
+                      setTestimonials((current) => current.map((review, itemIndex) => (itemIndex === index ? { ...review, role: event.target.value } : review)))
+                    }
+                  />
+                </label>
+              </div>
+              <label className="grid gap-2 text-sm font-medium">
+                Review
+                <textarea
+                  className="min-h-28 rounded-md border px-3 py-2"
+                  value={testimonial.quote}
+                  onChange={(event) =>
+                    setTestimonials((current) => current.map((review, itemIndex) => (itemIndex === index ? { ...review, quote: event.target.value } : review)))
+                  }
+                />
+              </label>
+              <button className="w-fit rounded-md border px-3 py-2 text-sm font-semibold text-destructive" type="button" onClick={() => setTestimonials((current) => current.filter((_, itemIndex) => itemIndex !== index))}>
+                Delete review
+              </button>
+            </div>
+          ))}
+        </div>
+        <div className="mt-5 flex flex-wrap gap-3">
+          <button className="rounded-md border px-4 py-2 text-sm font-semibold" type="button" onClick={() => setTestimonials((current) => [...current, { name: "", role: "", quote: "" }])}>
+            Add review
+          </button>
+          <button className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-60" type="button" disabled={isPending} onClick={saveReviews}>
+            {isPending ? "Saving..." : "Save Reviews"}
+          </button>
+        </div>
+        {message ? <p className="mt-4 text-sm font-medium text-accent">{message}</p> : null}
+        {error ? <p className="mt-4 text-sm font-medium text-destructive">{error}</p> : null}
+      </div>
+    </div>
+  );
+}
+
+function upsertFaqSection(
+  sections: PageSection[],
+  existing: FaqSection | undefined,
+  heading: string,
+  items: Array<{ question: string; answer: string }>,
+  isVisible: boolean
+): PageSection[] {
+  const cleanItems = items.filter((item) => item.question.trim() && item.answer.trim());
+  const nextSections: PageSection[] = sections.filter((section) => section.section_type !== "faq");
+  if (cleanItems.length) {
+    nextSections.push({
+      id: existing?.id ?? crypto.randomUUID(),
+      section_type: "faq",
+      position: nextSections.length + 1,
+      is_visible: isVisible,
+      variant: "accordion",
+      content_json: {
+        heading: heading.trim() || "Frequently asked questions",
+        items: cleanItems
+      }
+    });
+  }
+  return renumberSections(nextSections);
+}
+
+function upsertTestimonialsSection(
+  sections: PageSection[],
+  existing: TestimonialsSection | undefined,
+  heading: string,
+  testimonials: Array<{ name: string; role: string; quote: string }>,
+  isVisible: boolean
+): PageSection[] {
+  const cleanTestimonials = testimonials.filter((testimonial) => testimonial.name.trim() && testimonial.quote.trim());
+  const nextSections: PageSection[] = sections.filter((section) => section.section_type !== "testimonials");
+  if (cleanTestimonials.length) {
+    nextSections.push({
+      id: existing?.id ?? crypto.randomUUID(),
+      section_type: "testimonials",
+      position: nextSections.length + 1,
+      is_visible: isVisible,
+      variant: "cards",
+      content_json: {
+        heading: heading.trim() || "Client reviews",
+        testimonials: cleanTestimonials.map((testimonial) => ({ ...testimonial, role: testimonial.role.trim() || "Client" }))
+      }
+    });
+  }
+  return renumberSections(nextSections);
+}
+
+function renumberSections(sections: PageSection[]): PageSection[] {
+  return sections.map((section, index) => ({ ...section, position: index + 1 }));
 }
 
 export function ContactDetailsFromApi() {
@@ -52,8 +299,8 @@ export function ContactDetailsFromApi() {
   return (
     <div className="rounded-lg border bg-card p-6">
       <h1 className="font-serif text-3xl font-bold text-primary">Contact Details</h1>
-      {pageQuery.isLoading ? <p className="mt-3 text-muted-foreground">Loading contact details from the API...</p> : null}
-      {pageQuery.isError ? <p className="mt-3 text-destructive">Could not load contact details from the API.</p> : null}
+      {pageQuery.isLoading ? <p className="mt-3 text-muted-foreground">Loading contact details...</p> : null}
+      {pageQuery.isError ? <p className="mt-3 text-destructive">Could not load contact details. Please refresh and try again.</p> : null}
       <dl className="mt-6 grid gap-4 md:grid-cols-2">
         {pageQuery.data
           ? Object.entries(pageQuery.data.contact).map(([label, value]) => (

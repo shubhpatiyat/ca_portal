@@ -4,7 +4,6 @@ import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { adminApi } from "@/lib/api/admin";
-import { isLocalDevHost } from "@/lib/auth/supabase";
 import { Button } from "@/components/ui/Button";
 
 export function LoginForm() {
@@ -13,12 +12,6 @@ export function LoginForm() {
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const next = searchParams.get("next") ?? "/admin/dashboard";
-  const hasDevAuth = Boolean(process.env.NEXT_PUBLIC_DEV_AUTH_USER_ID) && isLocalDevHost();
-
-  function continueWithDevAuth() {
-    router.push(next);
-    router.refresh();
-  }
 
   function onSubmit(formData: FormData) {
     const email = String(formData.get("email") ?? "");
@@ -49,16 +42,6 @@ export function LoginForm() {
       <Button type="submit" disabled={isPending}>
         {isPending ? "Signing in..." : "Continue"}
       </Button>
-      {hasDevAuth ? (
-        <div className="grid gap-2 rounded-md border bg-muted/40 p-3">
-          <p className="text-xs text-muted-foreground">
-            Local dev token is enabled, so API calls can work without browser sign in.
-          </p>
-          <button className="text-left text-sm font-semibold text-primary" type="button" onClick={continueWithDevAuth}>
-            Continue with local dev auth
-          </button>
-        </div>
-      ) : null}
       <p className="text-sm text-muted-foreground">
         Need an account?{" "}
         <Link className="font-semibold text-primary" href="/admin/register">

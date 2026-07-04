@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -18,6 +19,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { adminApi } from "@/lib/api/admin";
+import { resolveAdminWebsiteUrl } from "@/lib/admin/website-url";
 
 const navItems = [
   { label: "Overview", href: "/admin/dashboard", icon: LayoutDashboard },
@@ -44,6 +46,14 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
     enabled: !isAuthScreen && !isSetupRoute
   });
 
+  useEffect(() => {
+    if (!isAuthScreen && !isSetupRoute && meQuery.isError) {
+      adminApi.signOut().finally(() => {
+        router.push(`/admin/login?next=${pathname}`);
+      });
+    }
+  }, [isAuthScreen, isSetupRoute, meQuery.isError, pathname, router]);
+
   if (isAuthScreen) {
     return <div className="admin-shell min-h-screen p-4">{children}</div>;
   }
@@ -53,10 +63,29 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
     router.push("/admin/login");
   }
 
+  if (isSetupRoute) {
+    return (
+      <div className="admin-shell min-h-screen">
+        <header className="border-b bg-background/90 backdrop-blur">
+          <div className="mx-auto flex min-h-16 max-w-5xl items-center justify-between gap-4 px-4">
+            <Link className="flex items-center gap-3 font-serif text-xl font-bold text-primary" href="/admin/onboarding">
+              <Sparkles size={22} aria-hidden="true" />
+              CA Site Platform
+            </Link>
+            <button className="rounded-md border bg-card px-4 py-2 text-sm font-semibold" type="button" onClick={signOut}>
+              Sign out
+            </button>
+          </div>
+        </header>
+        <main className="px-4 py-8">{children}</main>
+      </div>
+    );
+  }
+
   const organization = meQuery.data?.organization;
   const firmName = organization?.name ?? "Firm workspace";
-  const firmSlug = organization?.slug ?? "sharma-associates";
-  const websiteUrl = organization?.default_url ?? `/s/${firmSlug}`;
+  const firmSlug = organization?.slug ?? "firm";
+  const websiteUrl = resolveAdminWebsiteUrl(organization?.default_url, firmSlug, organization?.default_subdomain);
 
   return (
     <div className="admin-shell grid min-h-screen lg:grid-cols-[260px_1fr]">
@@ -108,18 +137,6 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           </div>
         </header>
         <main className="p-4 md:p-8">
-          {meQuery.isError && !isSetupRoute ? (
-            <div className="mb-6 rounded-lg border border-secondary/30 bg-secondary/10 p-4">
-              <h1 className="font-semibold text-primary">CMS is open in read-first mode</h1>
-              <p className="mt-2 text-muted-foreground">
-                I could not verify your admin membership, so content is loaded from the public site where possible. Save and publish need
-                Supabase login or local dev auth.
-              </p>
-              <Link className="mt-3 inline-flex rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground" href={`/admin/login?next=${pathname}`}>
-                Go to sign in
-              </Link>
-            </div>
-          ) : null}
           {children}
         </main>
       </div>

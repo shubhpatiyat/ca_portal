@@ -2,25 +2,25 @@ import type { PublicSitePage } from "@/types/site";
 
 export const demoPage: PublicSitePage = {
   organization_id: "11111111-1111-4111-8111-111111111111",
-  organization_slug: "sharma-associates",
-  firm_name: "Sharma & Associates",
-  city: "Jaipur",
+  organization_slug: "sample-ca-firm",
+  firm_name: "Sample CA Firm",
+  city: "Your City",
   template_key: "modern_ca",
   theme_key: "navy_gold",
   page_slug: "home",
   page_title: "Home",
   published_at: "2026-06-30T09:00:00+05:30",
   seo: {
-    title: "Sharma & Associates | Tax, GST and Compliance Support in Jaipur",
+    title: "Sample CA Firm | Tax, GST and Compliance Support",
     description:
-      "Chartered Accountants in Jaipur for income tax, GST, bookkeeping, payroll, audit support and business compliance.",
-    canonical_url: "http://localhost:3000/s/sharma-associates"
+      "Chartered Accountants for income tax, GST, bookkeeping, payroll, audit support and business compliance.",
+    canonical_url: "http://localhost:3000/s/sample-ca-firm"
   },
   contact: {
     phone: "+91 90000 12345",
     whatsapp: "https://wa.me/919000012345",
-    email: "office@sharmaassociates.in",
-    address: "C-Scheme, Jaipur, Rajasthan 302001"
+    email: "office@example.com",
+    address: "Your office address"
   },
   sections: [
     {
@@ -31,13 +31,13 @@ export const demoPage: PublicSitePage = {
       variant: "image_right",
       content_json: {
         eyebrow: "Trusted CA Services",
-        title: "Trusted Tax, GST and Compliance Support in Jaipur",
+        title: "Trusted Tax, GST and Compliance Support",
         description:
           "Launch reliable compliance workflows with a CA firm that keeps your books, filings and decisions moving without last-minute stress.",
         image_url:
           "https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&w=1200&q=80",
         primary_cta: { label: "Book a consultation", href: "#contact" },
-        secondary_cta: { label: "View services", href: "/s/sharma-associates/services" }
+        secondary_cta: { label: "View services", href: "/s/sample-ca-firm/services" }
       }
     },
     {
@@ -141,46 +141,19 @@ export const demoPage: PublicSitePage = {
       is_visible: true,
       variant: "portrait_card",
       content_json: {
-        founder_name: "CA Anirudh Sharma",
+        founder_name: "CA Founder Name",
         designation: "Founder and Senior Partner",
         bio:
-          "Anirudh works with founders and family businesses that want dependable compliance without generic agency templates or confusing CMS screens.",
+          "The founder works with businesses that want dependable compliance without generic templates or confusing content tools.",
         image_url:
           "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=900&q=80",
         credentials: ["FCA", "DISA (ICAI)", "GST and income tax advisory"]
       }
     },
     {
-      id: "faq-home",
-      section_type: "faq",
-      position: 8,
-      is_visible: true,
-      variant: "accordion",
-      content_json: {
-        heading: "Questions clients ask before contacting us",
-        items: [
-          {
-            question: "Can you take over from another accountant mid-year?",
-            answer:
-              "Yes. We review your current books, reconcile opening balances and create a transition plan before filing deadlines."
-          },
-          {
-            question: "Do you support startups and small businesses?",
-            answer:
-              "Yes. The default service mix includes GST, payroll, bookkeeping, TDS and business registration support."
-          },
-          {
-            question: "Can I preview changes before publishing?",
-            answer:
-              "Yes. Draft edits stay private until an owner reviews the preview and publishes the revision."
-          }
-        ]
-      }
-    },
-    {
       id: "cta-home",
       section_type: "cta_banner",
-      position: 9,
+      position: 8,
       is_visible: true,
       variant: "solid",
       content_json: {
@@ -192,7 +165,7 @@ export const demoPage: PublicSitePage = {
     {
       id: "contact-home",
       section_type: "contact_form",
-      position: 10,
+      position: 9,
       is_visible: true,
       variant: "standard",
       content_json: {
@@ -224,8 +197,8 @@ export function pageFromSlug(pageSlug: string): PublicSitePage {
       page_title: "Services",
       seo: {
         ...demoPage.seo,
-        title: "Services | Sharma & Associates",
-        canonical_url: "http://localhost:3000/s/sharma-associates/services"
+        title: "Services | Sample CA Firm",
+        canonical_url: "http://localhost:3000/s/sample-ca-firm/services"
       },
       sections: serviceSection ? [serviceSection, contactSection].filter(Boolean) as PublicSitePage["sections"] : demoPage.sections
     },
@@ -235,8 +208,8 @@ export function pageFromSlug(pageSlug: string): PublicSitePage {
       page_title: "About",
       seo: {
         ...demoPage.seo,
-        title: "About | Sharma & Associates",
-        canonical_url: "http://localhost:3000/s/sharma-associates/about"
+        title: "About | Sample CA Firm",
+        canonical_url: "http://localhost:3000/s/sample-ca-firm/about"
       },
       sections: founderSection ? [founderSection, contactSection].filter(Boolean) as PublicSitePage["sections"] : demoPage.sections
     },
@@ -246,8 +219,8 @@ export function pageFromSlug(pageSlug: string): PublicSitePage {
       page_title: "Contact",
       seo: {
         ...demoPage.seo,
-        title: "Contact | Sharma & Associates",
-        canonical_url: "http://localhost:3000/s/sharma-associates/contact"
+        title: "Contact | Sample CA Firm",
+        canonical_url: "http://localhost:3000/s/sample-ca-firm/contact"
       },
       sections: contactSection ? [contactSection] : demoPage.sections
     }

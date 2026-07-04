@@ -24,7 +24,7 @@ export function AuthCallback() {
 
     async function finishSignIn() {
       if (!supabase) {
-        setError("Supabase URL and anon key are required to finish sign in.");
+        setError("Sign in is not available right now. Please try again later.");
         return;
       }
 

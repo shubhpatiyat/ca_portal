@@ -24,11 +24,11 @@ export function DashboardOverview() {
       <div className="rounded-lg border bg-card p-6 shadow-sm">
         <h1 className="font-serif text-3xl font-bold text-primary">Overview</h1>
         <p className="mt-2 text-muted-foreground">
-          {pageQuery.isLoading ? "Loading website data from the API..." : "Your website data is coming from FastAPI and Supabase Postgres."}
+          {pageQuery.isLoading ? "Loading your workspace..." : "Track your website sections, leads and publishing readiness."}
         </p>
         {pageQuery.isError ? (
           <p className="mt-3 rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
-            Could not load the dashboard data. Check the API server, auth token, migrations and seed data.
+            We could not load your dashboard. Please sign in again or try refreshing the page.
           </p>
         ) : null}
         <div className="mt-5 flex flex-wrap gap-3">

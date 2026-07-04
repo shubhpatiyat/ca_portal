@@ -5,6 +5,7 @@ import { useEffect, useState, useTransition } from "react";
 import { ExternalLink, Save } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { adminApi } from "@/lib/api/admin";
+import { resolveAdminWebsiteUrl } from "@/lib/admin/website-url";
 import { brandFaviconUrl, brandInitials } from "@/lib/brand";
 import { Button } from "@/components/ui/Button";
 
@@ -28,6 +29,7 @@ export default function BrandingPage() {
   const displayName = name.trim() || organization?.name || "Your Firm";
   const initials = brandInitials(displayName);
   const faviconUrl = brandFaviconUrl(displayName);
+  const websiteUrl = organization ? resolveAdminWebsiteUrl(organization.default_url, organization.slug, organization.default_subdomain) : null;
 
   function saveBranding() {
     setMessage(null);
@@ -67,7 +69,7 @@ export default function BrandingPage() {
                 className="min-h-11 rounded-md border bg-background px-3"
                 value={name}
                 onChange={(event) => setName(event.target.value)}
-                placeholder="Sharma & Associates"
+                placeholder="Your CA firm"
               />
             </label>
             <label className="grid gap-2 text-sm font-medium">
@@ -76,7 +78,7 @@ export default function BrandingPage() {
                 className="min-h-11 rounded-md border bg-background px-3"
                 value={city}
                 onChange={(event) => setCity(event.target.value)}
-                placeholder="Jaipur"
+                placeholder="Your city"
               />
             </label>
           </div>
@@ -88,8 +90,8 @@ export default function BrandingPage() {
             <Button type="button" disabled={isPending || !displayName} onClick={saveBranding}>
               <Save size={16} /> {isPending ? "Saving..." : "Save Branding"}
             </Button>
-            {organization?.default_url ? (
-              <Link className="inline-flex min-h-10 items-center gap-2 rounded-md border bg-background px-4 py-2 text-sm font-semibold" href={organization.default_url} target="_blank">
+            {websiteUrl ? (
+              <Link className="inline-flex min-h-10 items-center gap-2 rounded-md border bg-background px-4 py-2 text-sm font-semibold" href={websiteUrl} target="_blank">
                 View site <ExternalLink size={16} />
               </Link>
             ) : null}

@@ -123,24 +123,34 @@ class PageService:
         self.db.flush()
 
         self.db.add(OrganizationMember(organization_id=organization.id, user_id=user_id, role="owner"))
-        self.db.add(
-            WebsiteConfig(
-                organization_id=organization.id,
-                template_key=payload.templateKey,
-                theme_key=payload.themeKey,
-                default_subdomain=default_subdomain,
-            )
+        config = WebsiteConfig(
+            organization_id=organization.id,
+            template_key=payload.templateKey,
+            theme_key=payload.themeKey,
+            default_subdomain=default_subdomain,
         )
+        self.db.add(config)
         self._ensure_default_domain(organization, settings, default_subdomain)
         page = WebsitePage(organization_id=organization.id, slug="home", title="Home")
         self.db.add(page)
         self.db.flush()
-        revision = PageRevision(page_id=page.id, version_number=1, status="draft", created_by_user_id=user_id)
-        self.db.add(revision)
+        draft_revision = PageRevision(page_id=page.id, version_number=1, status="draft", created_by_user_id=user_id)
+        published_revision = PageRevision(
+            page_id=page.id,
+            version_number=2,
+            status="published",
+            created_by_user_id=user_id,
+            published_at=datetime.now(timezone.utc),
+        )
+        self.db.add(draft_revision)
+        self.db.add(published_revision)
         self.db.flush()
         sections = section_list_adapter.validate_python(default_home_sections(payload))
-        self._replace_revision_sections(revision.id, sections)
-        page.current_draft_revision_id = revision.id
+        self._replace_revision_sections(draft_revision.id, sections)
+        self._replace_revision_sections(published_revision.id, sections)
+        page.current_draft_revision_id = draft_revision.id
+        page.current_published_revision_id = published_revision.id
+        config.published_revision_id = published_revision.id
         self._audit(organization.id, user_id, "onboarding_created", "website_page", page.id, {"page_slug": "home"})
         self.db.commit()
         return organization

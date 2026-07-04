@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ExternalLink } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { adminApi } from "@/lib/api/admin";
+import { resolveAdminWebsiteUrl } from "@/lib/admin/website-url";
 
 export default function SettingsPage() {
   const meQuery = useQuery({
@@ -12,6 +13,7 @@ export default function SettingsPage() {
     retry: false
   });
   const organization = meQuery.data?.organization;
+  const websiteUrl = organization ? resolveAdminWebsiteUrl(organization.default_url, organization.slug, organization.default_subdomain) : null;
 
   return (
     <div className="grid gap-6">
@@ -28,10 +30,10 @@ export default function SettingsPage() {
               This platform domain is created from your firm name and stays available as your built-in website address.
             </p>
           </div>
-          {organization?.default_url ? (
+          {websiteUrl ? (
             <Link
               className="inline-flex min-h-10 items-center gap-2 rounded-md border bg-background px-4 py-2 text-sm font-semibold"
-              href={organization.default_url}
+              href={websiteUrl}
               target="_blank"
             >
               Open <ExternalLink size={16} />
@@ -49,7 +51,7 @@ export default function SettingsPage() {
           <div className="rounded-md border bg-background p-4">
             <p className="text-xs font-semibold uppercase text-muted-foreground">Website URL</p>
             <p className="mt-2 break-all font-medium text-primary">
-              {meQuery.isLoading ? "Loading..." : organization?.default_url ?? "Not generated yet"}
+              {meQuery.isLoading ? "Loading..." : websiteUrl ?? "Not generated yet"}
             </p>
           </div>
         </div>

@@ -10,22 +10,25 @@ from app.schemas.admin import OnboardingRequest
 from app.services.default_content import default_home_sections
 from app.services.page_service import build_platform_hostname, section_list_adapter
 
+DEMO_ORGANIZATION_SLUG = "sample-ca-firm"
+DEMO_FIRM_NAME = "Sample CA Firm"
+
 
 def seed() -> None:
     settings = get_settings()
     owner_user_id = os.getenv("SEED_OWNER_USER_ID", "00000000-0000-4000-8000-000000000001")
     engine = create_engine(settings.database_url, pool_pre_ping=True)
     session = sessionmaker(bind=engine)()
-    organization = session.execute(select(Organization).where(Organization.slug == "sharma-associates")).scalar_one_or_none()
+    organization = session.execute(select(Organization).where(Organization.slug == DEMO_ORGANIZATION_SLUG)).scalar_one_or_none()
     if not organization:
-        organization = Organization(name="Sharma & Associates", slug="sharma-associates", city="Jaipur", status="active")
+        organization = Organization(name=DEMO_FIRM_NAME, slug=DEMO_ORGANIZATION_SLUG, city="Your City", status="active")
         session.add(organization)
         session.flush()
     if not session.execute(select(OrganizationMember).where(OrganizationMember.organization_id == organization.id)).first():
         session.add(OrganizationMember(organization_id=organization.id, user_id=owner_user_id, role="owner"))
     if not session.execute(select(WebsiteConfig).where(WebsiteConfig.organization_id == organization.id)).scalar_one_or_none():
-        session.add(WebsiteConfig(organization_id=organization.id, template_key="modern_ca", theme_key="navy_gold", default_subdomain="sharma-associates"))
-    default_hostname = build_platform_hostname("sharma-associates", settings)
+        session.add(WebsiteConfig(organization_id=organization.id, template_key="modern_ca", theme_key="navy_gold", default_subdomain=DEMO_ORGANIZATION_SLUG))
+    default_hostname = build_platform_hostname(DEMO_ORGANIZATION_SLUG, settings)
     if default_hostname and not session.execute(select(Domain).where(Domain.hostname == default_hostname)).scalar_one_or_none():
         session.add(Domain(organization_id=organization.id, hostname=default_hostname, is_primary=True, is_verified=True))
 
@@ -37,13 +40,13 @@ def seed() -> None:
 
     if not page.current_published_revision_id:
         payload = OnboardingRequest(
-            firmName="Sharma & Associates",
-            founderName="CA Anirudh Sharma",
-            city="Jaipur",
-            address="C-Scheme, Jaipur, Rajasthan 302001",
+            firmName=DEMO_FIRM_NAME,
+            founderName="CA Founder Name",
+            city="Your City",
+            address="Your office address",
             phone="+91 90000 12345",
             whatsapp="+91 90000 12345",
-            email="office@sharmaassociates.in",
+            email="office@example.com",
             services=[
                 "Income Tax Filing",
                 "GST Registration & Returns",
@@ -83,9 +86,9 @@ def seed() -> None:
             [
                 Lead(
                     organization_id=organization.id,
-                    name="Rohit Mehta",
+                    name="Sample Client",
                     phone="+91 98765 43210",
-                    email="rohit@example.com",
+                    email="client@example.com",
                     service_interest="GST Registration & Returns",
                     message="Need help correcting last quarter's returns.",
                     source_page_slug="home",

@@ -21,6 +21,7 @@ const services = [
 const steps = ["About your firm", "Contact details", "Services you offer", "Branding", "Review and publish"];
 
 type OnboardingValues = z.infer<typeof onboardingSchema>;
+type OnboardingFieldName = keyof OnboardingValues;
 
 const reservedSubdomains = new Set([
   "admin",
@@ -62,6 +63,48 @@ function previewDefaultUrl(firmName: string): string {
   return `${scheme}://${previewSubdomain(firmName)}.${platformDomain}`;
 }
 
+function landingPagePreview(values: OnboardingValues) {
+  const firmName = values.firmName || "Your firm";
+  const founderName = values.founderName || "Your founder";
+  const city = values.city || "your city";
+  const selectedServices = values.services.length ? values.services : ["Your services"];
+
+  return [
+    {
+      title: "Hero",
+      description: `Trusted tax, GST and compliance support in ${city}.`,
+      detail: `${firmName} helps clients keep tax, GST, bookkeeping and compliance work moving with confidence.`
+    },
+    {
+      title: "Services",
+      description: `${selectedServices.length} service${selectedServices.length === 1 ? "" : "s"} selected.`,
+      detail: selectedServices.join(", ")
+    },
+    {
+      title: "Founder profile",
+      description: founderName,
+      detail: `${founderName} leads ${firmName} with a focus on timely compliance and clear advice.`
+    },
+    {
+      title: "Trust proof",
+      description: "Reliable finance operations support.",
+      detail: "The first draft includes proof points that you can edit after onboarding."
+    },
+    {
+      title: "Contact section",
+      description: values.phone || values.email || "Your contact details",
+      detail: `${firmName} in ${city} will receive a consultation-focused contact section.`
+    }
+  ];
+}
+
+const stepFields: Record<number, OnboardingFieldName[]> = {
+  0: ["firmName", "founderName", "city", "address"],
+  1: ["phone", "whatsapp", "email"],
+  2: ["services"],
+  3: ["templateKey", "themeKey"]
+};
+
 export function OnboardingWizard() {
   const router = useRouter();
   const [step, setStep] = useState(0);
@@ -70,20 +113,30 @@ export function OnboardingWizard() {
   const form = useForm<OnboardingValues>({
     resolver: zodResolver(onboardingSchema),
     defaultValues: {
-      firmName: "Sharma & Associates",
-      founderName: "CA Anirudh Sharma",
-      city: "Jaipur",
-      address: "C-Scheme, Jaipur, Rajasthan 302001",
-      phone: "+91 90000 12345",
-      whatsapp: "+91 90000 12345",
-      email: "office@sharmaassociates.in",
-      services,
+      firmName: "",
+      founderName: "",
+      city: "",
+      address: "",
+      phone: "",
+      whatsapp: "",
+      email: "",
+      services: [],
       templateKey: "modern_ca",
       themeKey: "navy_gold"
     }
   });
   const watchedFirmName = form.watch("firmName");
+  const watchedValues = form.watch();
   const defaultUrlPreview = useMemo(() => previewDefaultUrl(watchedFirmName), [watchedFirmName]);
+  const previewSections = useMemo(() => landingPagePreview(watchedValues), [watchedValues]);
+
+  async function goNext() {
+    const fields = stepFields[step] ?? [];
+    const valid = await form.trigger(fields);
+    if (valid) {
+      setStep((value) => Math.min(steps.length - 1, value + 1));
+    }
+  }
 
   function finish(values: OnboardingValues) {
     setError(null);
@@ -110,33 +163,41 @@ export function OnboardingWizard() {
             </div>
           ))}
         </div>
+        <p className="mt-4 rounded-md border bg-background p-3 text-sm text-muted-foreground">
+          Nothing here is permanent. This creates a clean first draft that you can refine section by section after onboarding.
+        </p>
       </div>
 
       <form className="rounded-lg border bg-card p-6 shadow-sm" onSubmit={form.handleSubmit(finish)}>
         {step === 0 ? (
           <div className="grid gap-4 md:grid-cols-2">
-            <Field label="Firm name" register={form.register("firmName")} />
-            <Field label="CA / founder name" register={form.register("founderName")} />
-            <Field label="City" register={form.register("city")} />
-            <Field label="Office address" register={form.register("address")} />
+            <Field error={form.formState.errors.firmName?.message} label="Firm name" placeholder="Your CA firm" register={form.register("firmName")} />
+            <Field error={form.formState.errors.founderName?.message} label="CA / founder name" placeholder="Founder name" register={form.register("founderName")} />
+            <Field error={form.formState.errors.city?.message} label="City" placeholder="Your city" register={form.register("city")} />
+            <Field error={form.formState.errors.address?.message} label="Office address" placeholder="Your office address" register={form.register("address")} />
           </div>
         ) : null}
         {step === 1 ? (
           <div className="grid gap-4 md:grid-cols-2">
-            <Field label="Phone" register={form.register("phone")} />
-            <Field label="WhatsApp" register={form.register("whatsapp")} />
-            <Field label="Email" register={form.register("email")} type="email" />
+            <Field error={form.formState.errors.phone?.message} label="Phone" placeholder="+91 90000 12345" register={form.register("phone")} />
+            <Field error={form.formState.errors.whatsapp?.message} label="WhatsApp" placeholder="+91 90000 12345" register={form.register("whatsapp")} />
+            <Field error={form.formState.errors.email?.message} label="Email" placeholder="office@example.in" register={form.register("email")} type="email" />
           </div>
         ) : null}
         {step === 2 ? (
-          <div className="grid gap-3 md:grid-cols-2">
-            {services.map((service) => (
-              <label className="flex items-center gap-3 rounded-md border p-3 text-sm font-medium" key={service}>
-                <input type="checkbox" value={service} {...form.register("services")} />
-                {service}
-              </label>
-            ))}
-          </div>
+          <>
+            <div className="grid gap-3 md:grid-cols-2">
+              {services.map((service) => (
+                <label className="flex items-center gap-3 rounded-md border p-3 text-sm font-medium" key={service}>
+                  <input type="checkbox" value={service} {...form.register("services")} />
+                  {service}
+                </label>
+              ))}
+            </div>
+            {form.formState.errors.services?.message ? (
+              <p className="mt-3 text-sm font-medium text-destructive">{form.formState.errors.services.message}</p>
+            ) : null}
+          </>
         ) : null}
         {step === 3 ? (
           <div className="grid gap-4 md:grid-cols-2">
@@ -162,7 +223,7 @@ export function OnboardingWizard() {
           <div className="grid gap-4">
             <h2 className="font-serif text-2xl font-bold text-primary">Ready homepage</h2>
             <p className="text-muted-foreground">
-              The platform will create your organization, owner access, website settings, default home page, draft sections and a private preview.
+              Review the first draft section by section. You can edit every section after the preview is created.
             </p>
             <div className="rounded-lg border bg-background p-4 text-sm">
               <strong>{form.watch("firmName")}</strong> in {form.watch("city")} with {form.watch("services").length} selected services.
@@ -170,6 +231,22 @@ export function OnboardingWizard() {
             <div className="rounded-lg border bg-background p-4 text-sm">
               <p className="font-semibold text-primary">Default website URL</p>
               <p className="mt-1 break-all text-muted-foreground">{defaultUrlPreview}</p>
+            </div>
+            <div className="grid gap-3">
+              {previewSections.map((section, index) => (
+                <div className="rounded-lg border bg-background p-4" key={section.title}>
+                  <div className="flex items-start gap-3">
+                    <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
+                      {index + 1}
+                    </span>
+                    <div>
+                      <h3 className="font-semibold text-primary">{section.title}</h3>
+                      <p className="mt-1 text-sm text-muted-foreground">{section.description}</p>
+                      <p className="mt-2 text-sm leading-6">{section.detail}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         ) : null}
@@ -179,7 +256,7 @@ export function OnboardingWizard() {
             <ChevronLeft size={16} /> Back
           </Button>
           {step < steps.length - 1 ? (
-            <Button type="button" onClick={() => setStep((value) => Math.min(steps.length - 1, value + 1))}>
+            <Button type="button" onClick={goNext}>
               Next <ChevronRight size={16} />
             </Button>
           ) : (
@@ -196,16 +273,21 @@ export function OnboardingWizard() {
 function Field({
   label,
   register,
-  type = "text"
+  type = "text",
+  placeholder,
+  error
 }: {
   label: string;
   register: ReturnType<typeof useForm<OnboardingValues>>["register"] extends (name: never) => infer R ? R : never;
   type?: string;
+  placeholder?: string;
+  error?: string;
 }) {
   return (
     <label className="grid gap-2 text-sm font-medium">
       {label}
-      <input className="min-h-11 rounded-md border px-3" type={type} {...register} />
+      <input className="min-h-11 rounded-md border px-3" placeholder={placeholder} type={type} {...register} />
+      {error ? <span className="text-xs font-medium text-destructive">{error}</span> : null}
     </label>
   );
 }

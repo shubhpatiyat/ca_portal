@@ -83,7 +83,12 @@ const sectionGuides: Record<PageSection["section_type"], SectionGuide> = {
 };
 
 const requiredTypes: PageSection["section_type"][] = ["hero", "service_grid", "contact_form", "cta_banner"];
-const recommendedTypes: PageSection["section_type"][] = ["trust_stats", "image_text", "rich_text", "faq", "testimonials"];
+const recommendedTypes: PageSection["section_type"][] = ["trust_stats", "image_text", "rich_text"];
+const dedicatedContentTypes: PageSection["section_type"][] = ["faq", "testimonials"];
+
+function isDedicatedContentSection(section: PageSection) {
+  return dedicatedContentTypes.includes(section.section_type);
+}
 
 function sectionStatus(section: PageSection): "Complete" | "Needs attention" | "Hidden" {
   if (!section.is_visible) {
@@ -94,12 +99,6 @@ function sectionStatus(section: PageSection): "Complete" | "Needs attention" | "
   }
   if (section.section_type === "service_grid") {
     return section.content_json.services.length >= 3 ? "Complete" : "Needs attention";
-  }
-  if (section.section_type === "faq") {
-    return section.content_json.items.length >= 3 ? "Complete" : "Needs attention";
-  }
-  if (section.section_type === "testimonials") {
-    return section.content_json.testimonials.length >= 1 ? "Complete" : "Needs attention";
   }
   return "Complete";
 }
@@ -136,7 +135,7 @@ function buildReadiness(sections: PageSection[]) {
   const trustBoosters = [
     {
       label: "Trust proof is visible",
-      done: hasVisibleType(sections, "trust_stats") || hasVisibleType(sections, "testimonials")
+      done: hasVisibleType(sections, "trust_stats")
     },
     {
       label: "Process or onboarding steps explained",
@@ -150,10 +149,6 @@ function buildReadiness(sections: PageSection[]) {
           section.is_visible &&
           /security|secure|confidential|data|document/i.test(`${section.content_json.heading} ${section.content_json.body}`)
       )
-    },
-    {
-      label: "FAQ answers buyer objections",
-      done: sections.some((section) => section.section_type === "faq" && section.is_visible && section.content_json.items.length >= 3)
     }
   ];
   const checks = [...requiredBasics, ...trustBoosters];
@@ -250,28 +245,6 @@ const suggestedSections: Array<{
     })
   },
   {
-    key: "testimonials",
-    title: "Testimonials",
-    description: "Add social proof from clients or early relationships.",
-    section: () => ({
-      id: crypto.randomUUID(),
-      section_type: "testimonials",
-      position: 1,
-      is_visible: true,
-      variant: "cards",
-      content_json: {
-        heading: "What clients say",
-        testimonials: [
-          {
-            name: "Client Name",
-            role: "Founder, Company",
-            quote: "Replace this with a real client quote before publishing."
-          }
-        ]
-      }
-    })
-  },
-  {
     key: "final-cta",
     title: "Final CTA",
     description: "Give visitors one last clear action near the bottom.",
@@ -301,29 +274,6 @@ function serviceText(sections: PageSection[]): string {
 function contextualSuggestions(sections: PageSection[]): typeof suggestedSections {
   const services = serviceText(sections);
   const suggestions: typeof suggestedSections = [];
-
-  if (/gst/.test(services)) {
-    suggestions.push({
-      key: "gst-checklist",
-      title: "GST document checklist",
-      description: "Useful when GST filing or registration is a core service.",
-      section: () => ({
-        id: crypto.randomUUID(),
-        section_type: "faq",
-        position: 1,
-        is_visible: true,
-        variant: "accordion",
-        content_json: {
-          heading: "GST documents clients should keep ready",
-          items: [
-            { question: "What sales and purchase records are needed?", answer: "Keep invoices, credit notes, debit notes, e-way bills and payment records ready for review." },
-            { question: "Do you need bank statements?", answer: "Yes. Bank statements help reconcile collections, payments and input tax credit claims." },
-            { question: "Can you help with late GST returns?", answer: "Yes. We review pending periods, estimate exposure and create a filing plan." }
-          ]
-        }
-      })
-    });
-  }
 
   if (/registration|startup|incorporation|company|llp|opc/.test(services)) {
     suggestions.push({
@@ -400,42 +350,38 @@ export function WebsiteEditor() {
   const [isPending, startTransition] = useTransition();
 
   const sortedSections = useMemo(() => [...sections].sort((a, b) => a.position - b.position), [sections]);
+  const websiteSections = useMemo(() => sortedSections.filter((section) => !isDedicatedContentSection(section)), [sortedSections]);
+  const dedicatedSections = useMemo(() => sortedSections.filter(isDedicatedContentSection), [sortedSections]);
   const sectionPendingRemoval = useMemo(
     () => sortedSections.find((section) => section.id === sectionPendingRemovalId) ?? null,
     [sectionPendingRemovalId, sortedSections]
   );
-  const readiness = useMemo(() => buildReadiness(sortedSections), [sortedSections]);
-  const missingRequired = requiredTypes.filter((type) => !hasVisibleType(sortedSections, type));
-  const missingRecommended = recommendedTypes.filter((type) => !hasVisibleType(sortedSections, type));
-  const visibleCount = sortedSections.filter((section) => section.is_visible).length;
-  const allSuggestions = useMemo(() => [...contextualSuggestions(sortedSections), ...suggestedSections], [sortedSections]);
+  const readiness = useMemo(() => buildReadiness(websiteSections), [websiteSections]);
+  const missingRequired = requiredTypes.filter((type) => !hasVisibleType(websiteSections, type));
+  const missingRecommended = recommendedTypes.filter((type) => !hasVisibleType(websiteSections, type));
+  const visibleCount = websiteSections.filter((section) => section.is_visible).length;
+  const allSuggestions = useMemo(() => [...contextualSuggestions(websiteSections), ...suggestedSections], [websiteSections]);
   const suggestedToShow = allSuggestions.filter((suggestion) => {
-    if (suggestion.key === "gst-checklist") {
-      return !sortedSections.some((section) => section.section_type === "faq" && /gst/i.test(section.content_json.heading));
-    }
     if (suggestion.key === "startup-process") {
-      return !sortedSections.some((section) => section.section_type === "rich_text" && /registration|incorporation/i.test(section.content_json.heading));
+      return !websiteSections.some((section) => section.section_type === "rich_text" && /registration|incorporation/i.test(section.content_json.heading));
     }
     if (suggestion.key === "tax-notice") {
-      return !sortedSections.some((section) => section.section_type === "image_text" && /notice/i.test(`${section.content_json.heading} ${section.content_json.body}`));
+      return !websiteSections.some((section) => section.section_type === "image_text" && /notice/i.test(`${section.content_json.heading} ${section.content_json.body}`));
     }
     if (suggestion.key === "office-location") {
-      return !sortedSections.some((section) => section.section_type === "image_text" && /office|location|visit/i.test(`${section.content_json.heading} ${section.content_json.body}`));
+      return !websiteSections.some((section) => section.section_type === "image_text" && /office|location|visit/i.test(`${section.content_json.heading} ${section.content_json.body}`));
     }
     if (suggestion.key === "trust") {
-      return !hasVisibleType(sortedSections, "trust_stats");
+      return !hasVisibleType(websiteSections, "trust_stats");
     }
     if (suggestion.key === "process") {
-      return !hasVisibleType(sortedSections, "rich_text");
-    }
-    if (suggestion.key === "testimonials") {
-      return !hasVisibleType(sortedSections, "testimonials");
+      return !hasVisibleType(websiteSections, "rich_text");
     }
     if (suggestion.key === "final-cta") {
-      return !hasVisibleType(sortedSections, "cta_banner");
+      return !hasVisibleType(websiteSections, "cta_banner");
     }
     if (suggestion.key === "security") {
-      return !sortedSections.some(
+      return !websiteSections.some(
         (section) =>
           section.section_type === "image_text" &&
           /security|secure|confidential|data|document/i.test(`${section.content_json.heading} ${section.content_json.body}`)
@@ -444,7 +390,7 @@ export function WebsiteEditor() {
     return true;
   });
   const recommendedAdditions = suggestedToShow.filter((suggestion) =>
-    ["trust", "pain", "process", "security", "testimonials", "final-cta"].includes(suggestion.key)
+    ["trust", "pain", "process", "security", "final-cta"].includes(suggestion.key)
   );
 
   useEffect(() => {
@@ -466,13 +412,13 @@ export function WebsiteEditor() {
   }
 
   function move(index: number, direction: -1 | 1) {
-    const next = [...sortedSections];
+    const next = [...websiteSections];
     const target = index + direction;
     if (target < 0 || target >= next.length) {
       return;
     }
     [next[index], next[target]] = [next[target], next[index]];
-    updateSections(next);
+    updateSections([...next, ...dedicatedSections]);
   }
 
   function toggle(sectionId: string) {
@@ -495,33 +441,16 @@ export function WebsiteEditor() {
     setSectionPendingRemovalId(null);
   }
 
-  function addFaq() {
-    updateSections([
-      ...sortedSections,
-      {
-        id: crypto.randomUUID(),
-        section_type: "faq",
-        position: sortedSections.length + 1,
-        is_visible: true,
-        variant: "accordion",
-        content_json: {
-          heading: "New client questions",
-          items: [{ question: "What should clients know?", answer: "Edit this answer before publishing." }]
-        }
-      }
-    ]);
-  }
-
   function addSuggestedSection(createSection: () => PageSection) {
-    updateSections([...sortedSections, createSection()]);
+    updateSections([...websiteSections, createSection(), ...dedicatedSections]);
   }
 
   function applyRecommendedLayout() {
-    const nextSections = [...sortedSections];
+    const nextSections = [...websiteSections];
     for (const suggestion of recommendedAdditions) {
       nextSections.push(suggestion.section());
     }
-    updateSections(nextSections);
+    updateSections([...nextSections, ...dedicatedSections]);
     setShowRecommendedConfirm(false);
   }
 
@@ -556,7 +485,7 @@ export function WebsiteEditor() {
   }
 
   if (pageQuery.isLoading) {
-    return <div className="rounded-lg border bg-card p-6 text-muted-foreground">Loading home page from the API...</div>;
+    return <div className="rounded-lg border bg-card p-6 text-muted-foreground">Loading your home page...</div>;
   }
 
   if (pageQuery.isError) {
@@ -564,7 +493,7 @@ export function WebsiteEditor() {
       <div className="rounded-lg border bg-card p-6">
         <h1 className="font-serif text-2xl font-bold text-primary">Could not load the home page</h1>
         <p className="mt-2 text-muted-foreground">
-          Check that FastAPI is running, migrations are applied, seed data exists, and the admin request has a valid Supabase token.
+          Please sign in again or refresh the page. If this keeps happening, try again in a few minutes.
         </p>
       </div>
     );
@@ -589,9 +518,6 @@ export function WebsiteEditor() {
           <div className="flex flex-wrap gap-2">
             <Button variant="outline" type="button" onClick={() => setShowRecommendedConfirm(true)}>
               <Sparkles size={16} /> Apply Suggested Structure
-            </Button>
-            <Button variant="outline" type="button" onClick={addFaq}>
-              <Plus size={16} /> Add FAQ
             </Button>
             <Button variant="outline" type="button" onClick={saveDraft} disabled={isPending}>
               <Save size={16} /> Save Draft
@@ -794,7 +720,7 @@ export function WebsiteEditor() {
               <span>Status</span>
               <span>Actions</span>
             </div>
-            {sortedSections.map((section, index) => {
+            {websiteSections.map((section, index) => {
               const guide = sectionGuides[section.section_type];
               const status = sectionStatus(section);
               return (
@@ -805,7 +731,7 @@ export function WebsiteEditor() {
                       <button className="grid h-6 w-6 place-items-center rounded border text-muted-foreground disabled:opacity-40" type="button" onClick={() => move(index, -1)} disabled={index === 0} aria-label={`Move ${guide.label} up`}>
                         <ArrowUp size={13} aria-hidden="true" />
                       </button>
-                      <button className="grid h-6 w-6 place-items-center rounded border text-muted-foreground disabled:opacity-40" type="button" onClick={() => move(index, 1)} disabled={index === sortedSections.length - 1} aria-label={`Move ${guide.label} down`}>
+                      <button className="grid h-6 w-6 place-items-center rounded border text-muted-foreground disabled:opacity-40" type="button" onClick={() => move(index, 1)} disabled={index === websiteSections.length - 1} aria-label={`Move ${guide.label} down`}>
                         <ArrowDown size={13} aria-hidden="true" />
                       </button>
                     </div>

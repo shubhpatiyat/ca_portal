@@ -124,32 +124,8 @@ def default_home_sections(payload: OnboardingRequest) -> list[dict]:
         },
         {
             "id": str(uuid4()),
-            "section_type": "faq",
-            "position": 8,
-            "is_visible": True,
-            "variant": "accordion",
-            "content_json": {
-                "heading": "Frequently asked questions",
-                "items": [
-                    {
-                        "question": "Can you support ongoing GST and tax filings?",
-                        "answer": "Yes. We create a compliance calendar and keep drafts private until reviewed.",
-                    },
-                    {
-                        "question": "Can you take over from another accountant mid-year?",
-                        "answer": "Yes. We start with a transition review, reconcile opening balances, and create a practical handover plan.",
-                    },
-                    {
-                        "question": "How do you handle sensitive documents?",
-                        "answer": "Documents and access should be shared through controlled workflows with clear responsibilities and review trails.",
-                    },
-                ],
-            },
-        },
-        {
-            "id": str(uuid4()),
             "section_type": "cta_banner",
-            "position": 9,
+            "position": 8,
             "is_visible": True,
             "variant": "solid",
             "content_json": {
@@ -161,7 +137,7 @@ def default_home_sections(payload: OnboardingRequest) -> list[dict]:
         {
             "id": str(uuid4()),
             "section_type": "contact_form",
-            "position": 10,
+            "position": 9,
             "is_visible": True,
             "variant": "standard",
             "content_json": {

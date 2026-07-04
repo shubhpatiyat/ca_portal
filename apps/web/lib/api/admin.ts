@@ -46,21 +46,7 @@ export type OnboardingPayload = {
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL;
 
 async function fetchPublicHomePage(): Promise<PublicSitePage> {
-  if (!apiBaseUrl) {
-    return demoPage;
-  }
-
-  const response = await fetch(`${apiBaseUrl}/api/v1/public/sites/by-slug/sharma-associates/pages/home`, {
-    headers: {
-      "content-type": "application/json"
-    }
-  });
-
-  if (!response.ok) {
-    return demoPage;
-  }
-
-  return response.json() as Promise<PublicSitePage>;
+  return demoPage;
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
@@ -98,15 +84,15 @@ function mockRequest<T>(path: string, init?: RequestInit): T {
   if (path === "/api/v1/admin/me") {
     return {
       id: "00000000-0000-4000-8000-000000000001",
-      email: "owner@sharmaassociates.in",
+      email: "owner@example.com",
       organization: {
         id: demoPage.organization_id,
         name: demoPage.firm_name,
         slug: demoPage.organization_slug,
         city: demoPage.city,
         role: "owner",
-        default_subdomain: "sharma-associates",
-        default_url: "http://sharma-associates.lvh.me:3000"
+        default_subdomain: demoPage.organization_slug,
+        default_url: `http://${demoPage.organization_slug}.lvh.me:3000`
       }
     } as T;
   }
@@ -123,8 +109,8 @@ function mockRequest<T>(path: string, init?: RequestInit): T {
       slug: demoPage.organization_slug,
       city: body.city ?? demoPage.city,
       role: "owner",
-      default_subdomain: "sharma-associates",
-      default_url: "http://sharma-associates.lvh.me:3000"
+      default_subdomain: demoPage.organization_slug,
+      default_url: `http://${demoPage.organization_slug}.lvh.me:3000`
     } as T;
   }
 
@@ -132,9 +118,9 @@ function mockRequest<T>(path: string, init?: RequestInit): T {
     return [
       {
         id: "lead-1",
-        name: "Rohit Mehta",
+        name: "Sample Client",
         phone: "+91 98765 43210",
-        email: "rohit@example.com",
+        email: "client@example.com",
         service_interest: "GST Registration & Returns",
         message: "Need help correcting last quarter's returns.",
         source_page_slug: "home",
@@ -197,7 +183,7 @@ export const adminApi = {
   signIn: async (email: string, password: string) => {
     const supabase = createBrowserSupabaseClient();
     if (!supabase) {
-      throw new Error("Supabase URL and anon key are required for browser sign in.");
+      throw new Error("Sign in is not available right now. Please try again later.");
     }
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
@@ -225,7 +211,7 @@ export const adminApi = {
 
     const supabase = createBrowserSupabaseClient();
     if (!supabase) {
-      throw new Error("Supabase URL and anon key are required for browser registration.");
+      throw new Error("Account creation is not available right now. Please try again later.");
     }
     const { data, error } = await supabase.auth.signUp({
       email,
