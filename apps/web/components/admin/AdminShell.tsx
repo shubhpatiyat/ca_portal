@@ -18,7 +18,7 @@ import {
   Sparkles
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { adminApi } from "@/lib/api/admin";
+import { AdminApiError, adminApi } from "@/lib/api/admin";
 import { resolveAdminWebsiteUrl } from "@/lib/admin/website-url";
 
 const navItems = [
@@ -48,11 +48,15 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!isAuthScreen && !isSetupRoute && meQuery.isError) {
+      if (meQuery.error instanceof AdminApiError && meQuery.error.status === 403) {
+        router.push("/admin/onboarding");
+        return;
+      }
       adminApi.signOut().finally(() => {
         router.push(`/admin/login?next=${pathname}`);
       });
     }
-  }, [isAuthScreen, isSetupRoute, meQuery.isError, pathname, router]);
+  }, [isAuthScreen, isSetupRoute, meQuery.error, meQuery.isError, pathname, router]);
 
   if (isAuthScreen) {
     return <div className="admin-shell min-h-screen p-4">{children}</div>;

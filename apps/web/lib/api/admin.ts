@@ -47,6 +47,16 @@ export type OnboardingPayload = {
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL;
 
+export class AdminApiError extends Error {
+  constructor(
+    message: string,
+    public status: number
+  ) {
+    super(message);
+    this.name = "AdminApiError";
+  }
+}
+
 async function fetchPublicHomePage(): Promise<PublicSitePage> {
   return demoPage;
 }
@@ -72,7 +82,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
   if (!response.ok) {
     const message = await response.text().catch(() => "");
-    throw new Error(message || `Admin request failed with ${response.status}`);
+    throw new AdminApiError(message || `Admin request failed with ${response.status}`, response.status);
   }
 
   if (response.status === 204) {
