@@ -23,6 +23,8 @@ class OrganizationOut(BaseModel):
     slug: str
     city: str
     role: Role
+    template_key: Literal["modern_ca", "traditional_ca", "premium_ca"] = "modern_ca"
+    theme_key: Literal["navy_gold", "emerald_cream", "charcoal_blue"] = "navy_gold"
     default_subdomain: str | None = None
     default_url: str | None = None
 
@@ -36,6 +38,7 @@ class MeOut(BaseModel):
 class OrganizationUpdate(BaseModel):
     name: Annotated[str, StringConstraints(strip_whitespace=True, min_length=2, max_length=160)] | None = None
     city: Annotated[str, StringConstraints(strip_whitespace=True, min_length=2, max_length=100)] | None = None
+    theme_key: Literal["navy_gold", "emerald_cream", "charcoal_blue"] | None = None
 
 
 class DraftUpdate(BaseModel):

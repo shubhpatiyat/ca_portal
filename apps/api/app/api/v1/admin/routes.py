@@ -43,6 +43,8 @@ def organization_out(
         slug=tenant.organization_slug,
         city=organization.city if organization else "",
         role=tenant.role,
+        template_key=config.template_key if config else "modern_ca",
+        theme_key=config.theme_key if config else "navy_gold",
         default_subdomain=default_subdomain,
         default_url=build_platform_url(default_subdomain, settings),
     )
@@ -85,6 +87,9 @@ def update_organization(
         organization.name = payload.name
     if payload.city is not None:
         organization.city = payload.city
+    if payload.theme_key is not None:
+        config = db.execute(select(WebsiteConfig).where(WebsiteConfig.organization_id == tenant.organization_id)).scalar_one()
+        config.theme_key = payload.theme_key
     db.commit()
     PageService(db)._notify_revalidation(settings, tenant.organization_id, ["home", "services", "about", "contact"])
     return organization_out(db, tenant, settings, organization)

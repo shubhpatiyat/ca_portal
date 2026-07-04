@@ -8,6 +8,7 @@ export type Cta = {
 
 export type BaseSection<TType extends string, TVariant extends string, TContent> = {
   id: string;
+  admin_label?: string | null;
   section_type: TType;
   position: number;
   is_visible: boolean;

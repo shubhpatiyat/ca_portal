@@ -368,6 +368,7 @@ class PageService:
             self.db.add(
                 PageSectionModel(
                     revision_id=revision_id,
+                    admin_label=dumped.get("admin_label"),
                     section_type=dumped["section_type"],
                     position=dumped["position"],
                     is_visible=dumped["is_visible"],
@@ -383,6 +384,7 @@ class PageService:
         return [
             {
                 "id": row.id,
+                "admin_label": row.admin_label,
                 "section_type": row.section_type,
                 "position": row.position,
                 "is_visible": row.is_visible,

@@ -7,7 +7,7 @@ export function PublicFooter({ page }: { page: PublicSitePage }) {
   return (
     <footer className="border-t border-white/10 bg-[#141614] text-[#c7c6c4]">
       <div className="section-shell py-16">
-        <div className="grid gap-12 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-12 md:grid-cols-3">
           <div>
             <div className="flex items-center gap-3">
               <span className="grid h-11 w-11 place-items-center rounded-xl border-2 border-secondary bg-[#041627] font-serif text-base font-bold text-[#fbf9f4]">
@@ -34,14 +34,6 @@ export function PublicFooter({ page }: { page: PublicSitePage }) {
               <p>{page.contact.email}</p>
               <p>{page.contact.phone}</p>
               <p>{page.city}</p>
-            </div>
-          </div>
-          <div>
-            <h2 className="text-sm font-semibold uppercase tracking-[0.16em] text-[#e3e2e0]">Legal</h2>
-            <div className="mt-5 grid gap-3 text-sm opacity-80">
-              <a className="transition hover:text-white" href="#">Privacy Policy</a>
-              <a className="transition hover:text-white" href="#">Terms of Service</a>
-              <p>ICAI FRN Number</p>
             </div>
           </div>
         </div>

@@ -100,6 +100,7 @@ class PageSection(Base, TimestampMixin):
 
     id: Mapped[str] = mapped_column(UUID(as_uuid=False), primary_key=True, default=lambda: str(uuid4()))
     revision_id: Mapped[str] = mapped_column(UUID(as_uuid=False), ForeignKey("page_revisions.id", ondelete="CASCADE"), nullable=False, index=True)
+    admin_label: Mapped[str | None] = mapped_column(String(80), nullable=True)
     section_type: Mapped[str] = mapped_column(String(64), nullable=False)
     position: Mapped[int] = mapped_column(Integer, nullable=False)
     is_visible: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)

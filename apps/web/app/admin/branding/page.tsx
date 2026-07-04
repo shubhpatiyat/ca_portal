@@ -6,8 +6,15 @@ import { ExternalLink, Save } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { adminApi } from "@/lib/api/admin";
 import { resolveAdminWebsiteUrl } from "@/lib/admin/website-url";
-import { brandFaviconUrl, brandInitials } from "@/lib/brand";
+import { brandInitials } from "@/lib/brand";
 import { Button } from "@/components/ui/Button";
+import type { ThemeKey } from "@/types/site";
+
+const themes: Array<{ key: ThemeKey; name: string; swatches: string[] }> = [
+  { key: "navy_gold", name: "Navy and gold", swatches: ["#041627", "#3a674f", "#fbf9f4"] },
+  { key: "emerald_cream", name: "Emerald and cream", swatches: ["#0f3f35", "#bceecf", "#f7f8ef"] },
+  { key: "charcoal_blue", name: "Charcoal and blue", swatches: ["#222833", "#2e9ad0", "#f3f6f8"] }
+];
 
 export default function BrandingPage() {
   const queryClient = useQueryClient();
@@ -15,6 +22,7 @@ export default function BrandingPage() {
   const organization = meQuery.data?.organization;
   const [name, setName] = useState("");
   const [city, setCity] = useState("");
+  const [themeKey, setThemeKey] = useState<ThemeKey>("navy_gold");
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -23,12 +31,12 @@ export default function BrandingPage() {
     if (organization) {
       setName(organization.name);
       setCity(organization.city);
+      setThemeKey(organization.theme_key);
     }
   }, [organization]);
 
   const displayName = name.trim() || organization?.name || "Your Firm";
   const initials = brandInitials(displayName);
-  const faviconUrl = brandFaviconUrl(displayName);
   const websiteUrl = organization ? resolveAdminWebsiteUrl(organization.default_url, organization.slug, organization.default_subdomain) : null;
 
   function saveBranding() {
@@ -36,12 +44,13 @@ export default function BrandingPage() {
     setError(null);
     startTransition(async () => {
       try {
-        const updated = await adminApi.updateOrganization({ name: displayName, city: city.trim() || undefined });
+        const updated = await adminApi.updateOrganization({ name: displayName, city: city.trim() || undefined, theme_key: themeKey });
         setName(updated.name);
         setCity(updated.city);
+        setThemeKey(updated.theme_key);
         await queryClient.invalidateQueries({ queryKey: ["admin-me"] });
         await queryClient.invalidateQueries({ queryKey: ["admin-page", "home"] });
-        setMessage("Branding saved. Your public heading and favicon will use this identity.");
+        setMessage("Branding saved. Your public website will use this identity and theme.");
       } catch (caught) {
         setError(caught instanceof Error ? caught.message : "Could not save branding.");
       }
@@ -52,14 +61,14 @@ export default function BrandingPage() {
     <div className="grid gap-6">
       <div>
         <h1 className="font-serif text-3xl font-bold text-primary">Branding</h1>
-        <p className="mt-2 text-muted-foreground">Control the public firm name, browser tab icon and basic brand lockup.</p>
+        <p className="mt-2 text-muted-foreground">Control the public firm name, city and website theme.</p>
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[1fr_360px]">
         <section className="rounded-lg border bg-card p-6">
           <h2 className="text-lg font-semibold text-primary">Public identity</h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            This name appears in the public header, footer, SEO title and generated favicon.
+            This name appears in the public header, footer and SEO title.
           </p>
 
           <div className="mt-6 grid gap-4 md:grid-cols-2">
@@ -98,7 +107,7 @@ export default function BrandingPage() {
           </div>
         </section>
 
-        <aside className="rounded-lg border bg-card p-6">
+        <aside className="rounded-lg border bg-card p-6" data-theme={themeKey}>
           <h2 className="text-lg font-semibold text-primary">Preview</h2>
           <div className="mt-5 rounded-xl border bg-background p-5">
             <div className="flex items-center gap-3">
@@ -112,11 +121,11 @@ export default function BrandingPage() {
             </div>
           </div>
           <div className="mt-5 rounded-xl border bg-background p-5">
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Browser favicon</p>
-            <div className="mt-4 flex items-center gap-3">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img className="h-10 w-10 rounded-lg" src={faviconUrl} alt="" />
-              <span className="text-sm text-muted-foreground">{displayName}</span>
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Theme preview</p>
+            <div className="mt-4 grid gap-3">
+              <div className="h-3 rounded-full bg-primary" />
+              <div className="h-3 rounded-full bg-secondary" />
+              <div className="h-3 rounded-full bg-accent" />
             </div>
           </div>
         </aside>
@@ -125,18 +134,20 @@ export default function BrandingPage() {
       <section className="rounded-lg border bg-card p-6">
         <h2 className="text-lg font-semibold text-primary">Approved themes</h2>
         <div className="mt-5 grid gap-4 md:grid-cols-3">
-          {[
-            { name: "Navy and emerald", swatches: ["#041627", "#3a674f", "#fbf9f4"] },
-            { name: "Emerald and cream", swatches: ["#0f3f35", "#bceecf", "#f7f8ef"] },
-            { name: "Charcoal and blue", swatches: ["#222833", "#2e9ad0", "#f3f6f8"] }
-          ].map((theme) => (
-            <button className="rounded-lg border bg-background p-5 text-left shadow-sm" key={theme.name} type="button">
+          {themes.map((theme) => (
+            <button
+              className={`rounded-lg border bg-background p-5 text-left shadow-sm transition ${theme.key === themeKey ? "border-primary ring-2 ring-primary/20" : "hover:border-primary/50"}`}
+              key={theme.key}
+              type="button"
+              onClick={() => setThemeKey(theme.key)}
+            >
               <span className="font-semibold text-primary">{theme.name}</span>
               <span className="mt-3 flex gap-2">
                 {theme.swatches.map((swatch) => (
                   <span className="h-7 w-7 rounded-full border" style={{ backgroundColor: swatch }} key={swatch} />
                 ))}
               </span>
+              <span className="mt-4 block text-sm text-muted-foreground">{theme.key === themeKey ? "Selected" : "Click to select"}</span>
             </button>
           ))}
         </div>

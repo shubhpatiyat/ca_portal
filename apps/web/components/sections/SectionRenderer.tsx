@@ -5,16 +5,12 @@ import {
   BadgeIndianRupee,
   BookOpenCheck,
   CalendarDays,
-  CircleDollarSign,
   ClipboardList,
   EyeOff,
   FileCheck2,
-  Laptop,
-  Network,
   ReceiptIndianRupee,
   ShieldCheck,
-  UsersRound,
-  WalletCards
+  UsersRound
 } from "lucide-react";
 import type {
   ContactFormSection,
@@ -45,6 +41,12 @@ const iconRegistry = {
   FileCheck2
 };
 
+const fallbackImages = {
+  hero: "https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&w=1200&q=80",
+  office: "https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1200&q=80",
+  founder: "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=900&q=80"
+};
+
 function SectionButton({ href, label, secondary = false }: { href: string; label: string; secondary?: boolean }) {
   const classes = secondary
     ? "inline-flex min-h-12 items-center justify-center gap-2 rounded-lg border-2 border-secondary px-7 py-3 text-sm font-semibold uppercase tracking-[0.05em] text-secondary transition hover:bg-secondary/10"
@@ -68,9 +70,10 @@ function SectionButton({ href, label, secondary = false }: { href: string; label
 function Hero({ section, page }: SectionProps<HeroSection>) {
   const content = section.content_json;
   const centered = section.variant === "centered";
+  const imageUrl = content.image_url || fallbackImages.hero;
 
   return (
-    <section className="hero-gradient relative overflow-hidden pt-32 pb-24 lg:pt-36 lg:pb-32">
+    <section className="hero-gradient relative overflow-hidden pt-32 pb-24 lg:pt-36 lg:pb-32" id="home">
       <div className={`section-shell grid gap-16 ${centered ? "text-center" : "items-center lg:grid-cols-2"}`}>
         <div className={centered ? "mx-auto max-w-3xl" : "max-w-2xl"}>
           <p className="mb-6 inline-block rounded-full bg-[#bceecf] px-4 py-1 text-sm font-semibold uppercase tracking-[0.18em] text-[#224f39]">
@@ -84,35 +87,19 @@ function Hero({ section, page }: SectionProps<HeroSection>) {
               <SectionButton href={content.secondary_cta.href} label={content.secondary_cta.label} secondary />
             ) : null}
           </div>
-          <div className="mt-12 border-t border-border pt-8">
-            <p className="mb-4 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Trusted by growing businesses in {page.city}</p>
-            <div className="flex flex-wrap items-center gap-5 opacity-50 grayscale">
-              {["LOGO 1", "LOGO 2", "LOGO 3", "LOGO 4"].map((logo) => (
-                <div className="flex h-8 w-24 items-center justify-center rounded bg-muted text-xs font-bold" key={logo}>
-                  {logo}
-                </div>
-              ))}
-            </div>
-          </div>
         </div>
         {!centered ? (
           <div className="group relative hidden lg:block">
             <div className="absolute -inset-4 rounded-[1.5rem] bg-secondary/5 blur-2xl transition group-hover:bg-secondary/10" />
             <div className="relative aspect-[4/5] overflow-hidden rounded-2xl border border-border bg-muted shadow-2xl">
-              {content.image_url ? (
-                <Image
-                  src={content.image_url}
-                  alt={`${page.firm_name} client consultation`}
-                  fill
-                  className="object-cover grayscale-[0.2] transition duration-700 group-hover:grayscale-0"
-                  sizes="(min-width: 1024px) 48vw, 100vw"
-                  priority
-                />
-              ) : (
-                <div className="grid h-full place-items-center bg-muted">
-                  <WalletCards className="text-secondary/40" size={140} aria-hidden="true" />
-                </div>
-              )}
+              <Image
+                src={imageUrl}
+                alt={`${page.firm_name} client consultation`}
+                fill
+                className="object-cover grayscale-[0.2] transition duration-700 group-hover:grayscale-0"
+                sizes="(min-width: 1024px) 48vw, 100vw"
+                priority
+              />
             </div>
             <div className="absolute -bottom-6 -left-6 hidden rounded-xl border border-border bg-background p-6 shadow-xl md:block">
               <div className="flex items-center gap-3">
@@ -189,6 +176,7 @@ function ImageText({ section }: SectionProps<ImageTextSection>) {
   }
 
   const reverse = section.variant === "image_right";
+  const imageUrl = section.content_json.image_url || fallbackImages.office;
   return (
     <section className="bg-white py-24">
       <div className={`section-shell grid gap-16 lg:grid-cols-2 lg:items-center ${reverse ? "" : "lg:[&>*:first-child]:order-2"}`}>
@@ -205,9 +193,7 @@ function ImageText({ section }: SectionProps<ImageTextSection>) {
           ) : null}
         </div>
         <div className="relative min-h-[360px] overflow-hidden rounded-3xl border border-border bg-muted shadow-2xl">
-          {section.content_json.image_url ? (
-            <Image src={section.content_json.image_url} alt={section.content_json.heading} fill className="object-cover" sizes="50vw" />
-          ) : null}
+          <Image src={imageUrl} alt={section.content_json.heading} fill className="object-cover" sizes="50vw" />
         </div>
       </div>
     </section>
@@ -258,12 +244,7 @@ function PainSection({ section }: { section: ImageTextSection }) {
 }
 
 function SecuritySection({ section }: { section: ImageTextSection }) {
-  const pillars = [
-    ["Network controls", "Secure access patterns and protected data in transit.", Network],
-    ["Endpoint controls", "Device handling, encrypted storage, and access discipline.", Laptop],
-    ["Application controls", "Role-based permissions and safe document workflows.", FileCheck2],
-    ["Monitoring & audit", "Review trails, activity visibility, and periodic checks.", ShieldCheck]
-  ] as const;
+  const imageUrl = section.content_json.image_url || fallbackImages.office;
 
   return (
     <section className="bg-primary py-24 text-primary-foreground" id="security">
@@ -271,26 +252,19 @@ function SecuritySection({ section }: { section: ImageTextSection }) {
         <div>
           <h2 className="font-serif text-3xl font-semibold text-white md:text-5xl">{section.content_json.heading}</h2>
           <p className="mt-6 text-lg leading-8 text-primary-foreground/80">{section.content_json.body}</p>
-          <div className="mt-10 grid grid-cols-1 gap-8 sm:grid-cols-2">
-            {pillars.map(([title, body, Icon]) => (
-              <div className="space-y-4" key={title}>
-                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-[#bceecf]/20 text-[#bceecf]">
-                  <Icon size={24} aria-hidden="true" />
-                </div>
-                <h3 className="text-sm font-bold uppercase tracking-[0.14em] text-white">{title}</h3>
-                <p className="text-sm leading-6 text-primary-foreground/70">{body}</p>
-              </div>
-            ))}
-          </div>
           {section.content_json.cta ? (
-            <a className="mt-12 inline-flex items-center gap-2 font-semibold text-[#bceecf] hover:underline" href={section.content_json.cta.href}>
-              {section.content_json.cta.label} →
+            <a className="mt-8 inline-flex min-h-12 items-center justify-center rounded-lg border border-[#bceecf] px-6 py-3 font-semibold text-[#bceecf] transition hover:bg-[#bceecf] hover:text-primary" href={section.content_json.cta.href}>
+              {section.content_json.cta.label}
             </a>
           ) : null}
         </div>
         <div className="hidden lg:block">
-          <div className="grid aspect-square place-items-center rounded-3xl border border-white/10 bg-white/5">
-            <ShieldCheck className="text-[#bceecf]/25" size={190} aria-hidden="true" />
+          <div className="relative aspect-square overflow-hidden rounded-3xl border border-white/10 bg-white/5">
+            <Image src={imageUrl} alt={section.content_json.heading} fill className="object-cover opacity-80 mix-blend-luminosity" sizes="50vw" />
+            <div className="absolute inset-0 bg-primary/40" />
+            <div className="absolute inset-0 grid place-items-center">
+              <ShieldCheck className="text-[#bceecf]/70" size={120} aria-hidden="true" />
+            </div>
           </div>
         </div>
       </div>
@@ -299,20 +273,20 @@ function SecuritySection({ section }: { section: ImageTextSection }) {
 }
 
 function FounderProfile({ section }: SectionProps<FounderProfileSection>) {
+  const imageUrl = section.content_json.image_url || fallbackImages.founder;
+
   return (
     <section className="bg-white py-24" id="about">
       <div className="section-shell grid gap-16 lg:grid-cols-2 lg:items-center">
         <div className="relative">
           <div className="relative min-h-[420px] overflow-hidden rounded-3xl border border-border bg-muted shadow-2xl">
-          {section.content_json.image_url ? (
             <Image
-              src={section.content_json.image_url}
+              src={imageUrl}
               alt={section.content_json.founder_name}
               fill
               className="object-cover"
               sizes="(min-width: 768px) 40vw, 100vw"
             />
-          ) : null}
           </div>
           <div className="absolute right-8 top-8 rounded-xl border border-border bg-white/80 px-6 py-4 text-center shadow-lg backdrop-blur">
             <div className="font-serif text-xl font-semibold text-secondary">Chartered Accountant</div>

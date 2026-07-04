@@ -26,6 +26,7 @@ class CTA(BaseModel):
 
 class SectionBase(BaseModel):
     id: str
+    admin_label: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=80)] | None = None
     position: int = Field(ge=1)
     is_visible: bool = True
     model_config = ConfigDict(extra="forbid")

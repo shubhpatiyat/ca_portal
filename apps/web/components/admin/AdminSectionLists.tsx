@@ -251,6 +251,7 @@ function upsertFaqSection(
   if (cleanItems.length) {
     nextSections.push({
       id: existing?.id ?? crypto.randomUUID(),
+      admin_label: existing?.admin_label ?? "FAQs",
       section_type: "faq",
       position: nextSections.length + 1,
       is_visible: isVisible,
@@ -276,6 +277,7 @@ function upsertTestimonialsSection(
   if (cleanTestimonials.length) {
     nextSections.push({
       id: existing?.id ?? crypto.randomUUID(),
+      admin_label: existing?.admin_label ?? "Client reviews",
       section_type: "testimonials",
       position: nextSections.length + 1,
       is_visible: isVisible,

@@ -14,6 +14,8 @@ export type AdminOrganization = {
   slug: string;
   city: string;
   role: "owner" | "editor" | "viewer";
+  template_key: TemplateKey;
+  theme_key: ThemeKey;
   default_subdomain?: string | null;
   default_url?: string | null;
 };
@@ -91,6 +93,8 @@ function mockRequest<T>(path: string, init?: RequestInit): T {
         slug: demoPage.organization_slug,
         city: demoPage.city,
         role: "owner",
+        template_key: demoPage.template_key,
+        theme_key: demoPage.theme_key,
         default_subdomain: demoPage.organization_slug,
         default_url: `http://${demoPage.organization_slug}.lvh.me:3000`
       }
@@ -102,13 +106,15 @@ function mockRequest<T>(path: string, init?: RequestInit): T {
   }
 
   if (path === "/api/v1/admin/organization" && init?.method === "PATCH") {
-    const body = init.body ? JSON.parse(String(init.body)) as Partial<Pick<AdminOrganization, "name" | "city">> : {};
+    const body = init.body ? JSON.parse(String(init.body)) as Partial<Pick<AdminOrganization, "name" | "city" | "theme_key">> : {};
     return {
       id: demoPage.organization_id,
       name: body.name ?? demoPage.firm_name,
       slug: demoPage.organization_slug,
       city: body.city ?? demoPage.city,
       role: "owner",
+      template_key: demoPage.template_key,
+      theme_key: body.theme_key ?? demoPage.theme_key,
       default_subdomain: demoPage.organization_slug,
       default_url: `http://${demoPage.organization_slug}.lvh.me:3000`
     } as T;
@@ -169,7 +175,7 @@ export const adminApi = {
       method: "POST",
       body: JSON.stringify(payload)
     }),
-  updateOrganization: (payload: { name?: string; city?: string }) =>
+  updateOrganization: (payload: { name?: string; city?: string; theme_key?: ThemeKey }) =>
     request<AdminOrganization>("/api/v1/admin/organization", {
       method: "PATCH",
       body: JSON.stringify(payload)

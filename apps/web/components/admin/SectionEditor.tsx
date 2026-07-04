@@ -32,6 +32,10 @@ const labels: Record<PageSection["section_type"], string> = {
   rich_text: "Helpful Article"
 };
 
+function sectionDisplayName(section: PageSection): string {
+  return section.admin_label?.trim() || labels[section.section_type];
+}
+
 const sectionTips: Record<PageSection["section_type"], { goal: string; checks: string[] }> = {
   hero: {
     goal: "Make the offer clear in the first few seconds and point visitors to one primary action.",
@@ -92,7 +96,7 @@ export function SectionEditor({ sectionId }: { sectionId: string }) {
     setSection(pageQuery.data.sections.find((item) => item.id === sectionId) ?? null);
   }, [pageQuery.data, sectionId]);
 
-  const title = useMemo(() => (section ? labels[section.section_type] : "Section"), [section]);
+  const title = useMemo(() => (section ? sectionDisplayName(section) : "Section"), [section]);
 
   function updateSection(nextSection: PageSection) {
     setSection(nextSection);
@@ -135,6 +139,11 @@ export function SectionEditor({ sectionId }: { sectionId: string }) {
         <p className="mt-2 text-muted-foreground">Update client-facing content. Layout, styling and allowed fields stay controlled.</p>
 
         <div className="mt-6 grid gap-4">
+          <TextField
+            label="Section name in your workspace"
+            value={section.admin_label ?? ""}
+            onChange={(adminLabel) => updateSection({ ...section, admin_label: adminLabel.trim() ? adminLabel : undefined })}
+          />
           <SectionFields section={section} onChange={updateSection} />
         </div>
 

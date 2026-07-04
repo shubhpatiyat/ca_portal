@@ -82,6 +82,10 @@ const sectionGuides: Record<PageSection["section_type"], SectionGuide> = {
   }
 };
 
+function sectionDisplayName(section: PageSection): string {
+  return section.admin_label?.trim() || sectionGuides[section.section_type].label;
+}
+
 const requiredTypes: PageSection["section_type"][] = ["hero", "service_grid", "contact_form", "cta_banner"];
 const recommendedTypes: PageSection["section_type"][] = ["trust_stats", "image_text", "rich_text"];
 const dedicatedContentTypes: PageSection["section_type"][] = ["faq", "testimonials"];
@@ -175,6 +179,7 @@ const suggestedSections: Array<{
     description: "Add numbers or proof that reduce hesitation.",
     section: () => ({
       id: crypto.randomUUID(),
+      admin_label: "Trust indicators",
       section_type: "trust_stats",
       position: 1,
       is_visible: true,
@@ -195,6 +200,7 @@ const suggestedSections: Array<{
     description: "Show visitors the tax, compliance, or bookkeeping problems you help fix.",
     section: () => ({
       id: crypto.randomUUID(),
+      admin_label: "Client concerns",
       section_type: "image_text",
       position: 1,
       is_visible: true,
@@ -214,6 +220,7 @@ const suggestedSections: Array<{
     description: "Make onboarding feel simple and safe.",
     section: () => ({
       id: crypto.randomUUID(),
+      admin_label: "How we work",
       section_type: "rich_text",
       position: 1,
       is_visible: true,
@@ -231,6 +238,7 @@ const suggestedSections: Array<{
     description: "Reassure buyers before they share sensitive financial data.",
     section: () => ({
       id: crypto.randomUUID(),
+      admin_label: "Data security",
       section_type: "image_text",
       position: 1,
       is_visible: true,
@@ -250,6 +258,7 @@ const suggestedSections: Array<{
     description: "Give visitors one last clear action near the bottom.",
     section: () => ({
       id: crypto.randomUUID(),
+      admin_label: "Final consultation CTA",
       section_type: "cta_banner",
       position: 1,
       is_visible: true,
@@ -282,6 +291,7 @@ function contextualSuggestions(sections: PageSection[]): typeof suggestedSection
       description: "Helpful for startup or business-registration focused firms.",
       section: () => ({
         id: crypto.randomUUID(),
+        admin_label: "Incorporation process",
         section_type: "rich_text",
         position: 1,
         is_visible: true,
@@ -302,6 +312,7 @@ function contextualSuggestions(sections: PageSection[]): typeof suggestedSection
       description: "Useful if clients often arrive with notices or filing doubts.",
       section: () => ({
         id: crypto.randomUUID(),
+        admin_label: "Tax notice support",
         section_type: "image_text",
         position: 1,
         is_visible: true,
@@ -322,6 +333,7 @@ function contextualSuggestions(sections: PageSection[]): typeof suggestedSection
     description: "Good for local firms where walk-ins and city trust matter.",
     section: () => ({
       id: crypto.randomUUID(),
+      admin_label: "Office location",
       section_type: "image_text",
       position: 1,
       is_visible: true,
@@ -583,7 +595,7 @@ export function WebsiteEditor() {
               </div>
               <div>
                 <h2 className="font-semibold text-primary" id="remove-section-title">
-                  Remove {sectionGuides[sectionPendingRemoval.section_type].label}?
+                  Remove {sectionDisplayName(sectionPendingRemoval)}?
                 </h2>
                 <p className="mt-2 text-sm leading-6 text-muted-foreground" id="remove-section-description">
                   This removes the section from your draft. The published website changes only after you publish.
@@ -722,23 +734,26 @@ export function WebsiteEditor() {
             </div>
             {websiteSections.map((section, index) => {
               const guide = sectionGuides[section.section_type];
+              const displayName = sectionDisplayName(section);
               const status = sectionStatus(section);
               return (
                 <div className="grid gap-4 border-b px-4 py-4 last:border-b-0 lg:grid-cols-[44px_1fr_120px_112px_120px] lg:items-center" key={section.id}>
                   <div className="flex items-center gap-2">
                     <GripVertical size={18} aria-hidden="true" />
                     <div className="flex gap-1 lg:grid lg:gap-1">
-                      <button className="grid h-6 w-6 place-items-center rounded border text-muted-foreground disabled:opacity-40" type="button" onClick={() => move(index, -1)} disabled={index === 0} aria-label={`Move ${guide.label} up`}>
+                      <button className="grid h-6 w-6 place-items-center rounded border text-muted-foreground disabled:opacity-40" type="button" onClick={() => move(index, -1)} disabled={index === 0} aria-label={`Move ${displayName} up`}>
                         <ArrowUp size={13} aria-hidden="true" />
                       </button>
-                      <button className="grid h-6 w-6 place-items-center rounded border text-muted-foreground disabled:opacity-40" type="button" onClick={() => move(index, 1)} disabled={index === websiteSections.length - 1} aria-label={`Move ${guide.label} down`}>
+                      <button className="grid h-6 w-6 place-items-center rounded border text-muted-foreground disabled:opacity-40" type="button" onClick={() => move(index, 1)} disabled={index === websiteSections.length - 1} aria-label={`Move ${displayName} down`}>
                         <ArrowDown size={13} aria-hidden="true" />
                       </button>
                     </div>
                   </div>
                   <div>
-                    <p className="font-semibold text-primary">{guide.label}</p>
-                    <p className="mt-1 text-sm leading-6 text-muted-foreground">{guide.purpose}</p>
+                    <p className="font-semibold text-primary">{displayName}</p>
+                    <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                      <span className="font-medium">{guide.label}</span> · {guide.purpose}
+                    </p>
                   </div>
                   <span className="w-fit rounded-md border bg-background px-3 py-1 text-sm font-semibold text-muted-foreground">
                     {guide.importance}
@@ -760,7 +775,7 @@ export function WebsiteEditor() {
                     <Link className="rounded-md border px-3 py-2 text-sm font-semibold" href={`/admin/website/sections/${section.id}`}>
                       Edit
                     </Link>
-                    <button className="rounded-md border p-2 text-destructive" type="button" onClick={() => requestRemove(section.id)} aria-label="Remove section">
+                    <button className="rounded-md border p-2 text-destructive" type="button" onClick={() => requestRemove(section.id)} aria-label={`Remove ${displayName}`}>
                       <Trash2 size={16} />
                     </button>
                   </div>

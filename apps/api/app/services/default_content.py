@@ -2,6 +2,10 @@ from uuid import uuid4
 
 from app.schemas.admin import OnboardingRequest
 
+HERO_IMAGE_URL = "https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&w=1200&q=80"
+OFFICE_IMAGE_URL = "https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1200&q=80"
+FOUNDER_IMAGE_URL = "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=900&q=80"
+
 
 def slugify(value: str) -> str:
     cleaned = "".join(char.lower() if char.isalnum() else "-" for char in value)
@@ -21,6 +25,7 @@ def default_home_sections(payload: OnboardingRequest) -> list[dict]:
     return [
         {
             "id": str(uuid4()),
+            "admin_label": "Home banner",
             "section_type": "hero",
             "position": 1,
             "is_visible": True,
@@ -29,12 +34,14 @@ def default_home_sections(payload: OnboardingRequest) -> list[dict]:
                 "eyebrow": "Trusted CA Services",
                 "title": f"Trusted Tax, GST and Compliance Support in {payload.city}",
                 "description": f"{payload.firmName} helps clients keep tax, GST, bookkeeping and compliance work moving with confidence.",
+                "image_url": HERO_IMAGE_URL,
                 "primary_cta": {"label": "Book a consultation", "href": "#contact"},
                 "secondary_cta": {"label": "View services", "href": "/services"},
             },
         },
         {
             "id": str(uuid4()),
+            "admin_label": "Trust indicators",
             "section_type": "trust_stats",
             "position": 2,
             "is_visible": True,
@@ -50,6 +57,7 @@ def default_home_sections(payload: OnboardingRequest) -> list[dict]:
         },
         {
             "id": str(uuid4()),
+            "admin_label": "Services",
             "section_type": "service_grid",
             "position": 3,
             "is_visible": True,
@@ -62,6 +70,7 @@ def default_home_sections(payload: OnboardingRequest) -> list[dict]:
         },
         {
             "id": str(uuid4()),
+            "admin_label": "Client concerns",
             "section_type": "image_text",
             "position": 4,
             "is_visible": True,
@@ -73,11 +82,13 @@ def default_home_sections(payload: OnboardingRequest) -> list[dict]:
                     "Books behind schedule, compliance deadlines approaching, and documents scattered across channels can slow down "
                     f"business decisions. {payload.firmName} helps bring the work back into a clear monthly rhythm."
                 ),
+                "image_url": OFFICE_IMAGE_URL,
                 "cta": {"label": "Talk to us", "href": "#contact"},
             },
         },
         {
             "id": str(uuid4()),
+            "admin_label": "How we work",
             "section_type": "rich_text",
             "position": 5,
             "is_visible": True,
@@ -95,6 +106,7 @@ def default_home_sections(payload: OnboardingRequest) -> list[dict]:
         },
         {
             "id": str(uuid4()),
+            "admin_label": "Data security",
             "section_type": "image_text",
             "position": 6,
             "is_visible": True,
@@ -111,6 +123,7 @@ def default_home_sections(payload: OnboardingRequest) -> list[dict]:
         },
         {
             "id": str(uuid4()),
+            "admin_label": "Founder profile",
             "section_type": "founder_profile",
             "position": 7,
             "is_visible": True,
@@ -119,11 +132,13 @@ def default_home_sections(payload: OnboardingRequest) -> list[dict]:
                 "founder_name": payload.founderName,
                 "designation": "Founder",
                 "bio": f"{payload.founderName} leads {payload.firmName} with a focus on timely compliance and clear advice.",
+                "image_url": FOUNDER_IMAGE_URL,
                 "credentials": ["Chartered Accountant", "Tax and compliance advisory"],
             },
         },
         {
             "id": str(uuid4()),
+            "admin_label": "Final consultation CTA",
             "section_type": "cta_banner",
             "position": 8,
             "is_visible": True,
@@ -136,6 +151,7 @@ def default_home_sections(payload: OnboardingRequest) -> list[dict]:
         },
         {
             "id": str(uuid4()),
+            "admin_label": "Contact form",
             "section_type": "contact_form",
             "position": 9,
             "is_visible": True,
