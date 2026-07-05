@@ -7,9 +7,11 @@ import {
   ArrowDown,
   ArrowUp,
   CheckCircle2,
+  ExternalLink,
   Eye,
   GripVertical,
   Lightbulb,
+  PencilLine,
   Plus,
   Save,
   Send,
@@ -19,7 +21,7 @@ import {
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { PageSection } from "@/types/site";
 import { adminApi } from "@/lib/api/admin";
-import { Button } from "@/components/ui/Button";
+import { Button, ButtonLink } from "@/components/ui/Button";
 
 type SectionImportance = "Required" | "Recommended" | "Optional";
 
@@ -357,6 +359,7 @@ export function WebsiteEditor() {
   const [dirty, setDirty] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [publishedAt, setPublishedAt] = useState("");
+  const [showPublishSuccess, setShowPublishSuccess] = useState(false);
   const [showRecommendedConfirm, setShowRecommendedConfirm] = useState(false);
   const [sectionPendingRemovalId, setSectionPendingRemovalId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -421,6 +424,7 @@ export function WebsiteEditor() {
   function updateSections(nextSections: PageSection[]) {
     setSections(nextSections.map((section, index) => ({ ...section, position: index + 1 })));
     setDirty(true);
+    setShowPublishSuccess(false);
   }
 
   function move(index: number, direction: -1 | 1) {
@@ -490,6 +494,7 @@ export function WebsiteEditor() {
         setPublishedAt(new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeStyle: "short" }).format(new Date(result.published_at)));
         await queryClient.invalidateQueries({ queryKey: ["admin-page", "home"] });
         setDirty(false);
+        setShowPublishSuccess(true);
       } catch (caught) {
         setActionError(caught instanceof Error ? caught.message : "Could not publish changes.");
       }
@@ -507,6 +512,33 @@ export function WebsiteEditor() {
         <p className="mt-2 text-muted-foreground">
           Please sign in again or refresh the page. If this keeps happening, try again in a few minutes.
         </p>
+      </div>
+    );
+  }
+
+  if (showPublishSuccess && pageQuery.data) {
+    const publishedSiteHref = `/s/${pageQuery.data.organization_slug}`;
+
+    return (
+      <div className="grid min-h-[65vh] place-items-center">
+        <section className="w-full max-w-2xl rounded-lg border bg-card p-6 text-center shadow-soft">
+          <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-accent/15 text-accent">
+            <CheckCircle2 size={30} aria-hidden="true" />
+          </div>
+          <h1 className="mt-5 font-serif text-3xl font-bold text-primary">Site successfully published</h1>
+          <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-muted-foreground">
+            Your latest edits are live on the public website.
+            {publishedAt ? ` Published ${publishedAt}.` : ""}
+          </p>
+          <div className="mt-7 flex flex-col justify-center gap-3 sm:flex-row">
+            <ButtonLink href={publishedSiteHref} target="_blank" rel="noreferrer">
+              <ExternalLink size={16} /> View your site
+            </ButtonLink>
+            <Button variant="outline" type="button" onClick={() => setShowPublishSuccess(false)}>
+              <PencilLine size={16} /> Continue editing
+            </Button>
+          </div>
+        </section>
       </div>
     );
   }
@@ -535,7 +567,7 @@ export function WebsiteEditor() {
               <Save size={16} /> Save Draft
             </Button>
             <Link className="inline-flex min-h-10 items-center gap-2 rounded-md border px-4 py-2 text-sm font-semibold" href="/admin/website/preview">
-              <Eye size={16} /> Preview Website
+              <Eye size={16} /> View Website
             </Link>
             <Button type="button" onClick={publish} disabled={isPending}>
               <Send size={16} /> Publish Changes
