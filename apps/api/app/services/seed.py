@@ -8,7 +8,7 @@ from app.core.config import get_settings
 from app.models import Domain, Lead, Organization, OrganizationMember, PageRevision, PageSection, WebsiteConfig, WebsitePage
 from app.schemas.admin import OnboardingRequest
 from app.services.default_content import default_home_sections
-from app.services.page_service import build_platform_hostname, section_list_adapter
+from app.services.page_service import build_platform_hostname, build_whatsapp_url, validate_section_list
 
 DEMO_ORGANIZATION_SLUG = "sample-ca-firm"
 DEMO_FIRM_NAME = "Sample CA Firm"
@@ -27,7 +27,18 @@ def seed() -> None:
     if not session.execute(select(OrganizationMember).where(OrganizationMember.organization_id == organization.id)).first():
         session.add(OrganizationMember(organization_id=organization.id, user_id=owner_user_id, role="owner"))
     if not session.execute(select(WebsiteConfig).where(WebsiteConfig.organization_id == organization.id)).scalar_one_or_none():
-        session.add(WebsiteConfig(organization_id=organization.id, template_key="modern_ca", theme_key="navy_gold", default_subdomain=DEMO_ORGANIZATION_SLUG))
+        session.add(
+            WebsiteConfig(
+                organization_id=organization.id,
+                template_key="modern_ca",
+                theme_key="navy_gold",
+                default_subdomain=DEMO_ORGANIZATION_SLUG,
+                contact_phone="+91 90000 12345",
+                contact_whatsapp=build_whatsapp_url("+91 90000 12345"),
+                contact_email="office@example.com",
+                contact_address="Your office address",
+            )
+        )
     default_hostname = build_platform_hostname(DEMO_ORGANIZATION_SLUG, settings)
     if default_hostname and not session.execute(select(Domain).where(Domain.hostname == default_hostname)).scalar_one_or_none():
         session.add(Domain(organization_id=organization.id, hostname=default_hostname, is_primary=True, is_verified=True))
@@ -66,7 +77,7 @@ def seed() -> None:
         )
         session.add(revision)
         session.flush()
-        for section in section_list_adapter.validate_python(default_home_sections(payload)):
+        for section in validate_section_list(default_home_sections(payload)):
             data = section.model_dump(mode="json")
             session.add(
                 PageSection(

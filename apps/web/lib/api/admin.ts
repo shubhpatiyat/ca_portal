@@ -1,5 +1,4 @@
 import type { PageSection, PublicSitePage, TemplateKey, ThemeKey } from "@/types/site";
-import { demoPage } from "@/lib/demo-site";
 import { createBrowserSupabaseClient, getSupabaseAccessToken } from "@/lib/auth/supabase";
 
 export type AdminUser = {
@@ -57,13 +56,9 @@ export class AdminApiError extends Error {
   }
 }
 
-async function fetchPublicHomePage(): Promise<PublicSitePage> {
-  return demoPage;
-}
-
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   if (!apiBaseUrl) {
-    return mockRequest<T>(path, init);
+    throw new Error("NEXT_PUBLIC_API_URL is required for the admin workspace.");
   }
 
   const token = await getSupabaseAccessToken();
@@ -92,85 +87,9 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return response.json() as Promise<T>;
 }
 
-function mockRequest<T>(path: string, init?: RequestInit): T {
-  if (path === "/api/v1/admin/me") {
-    return {
-      id: "00000000-0000-4000-8000-000000000001",
-      email: "owner@example.com",
-      organization: {
-        id: demoPage.organization_id,
-        name: demoPage.firm_name,
-        slug: demoPage.organization_slug,
-        city: demoPage.city,
-        role: "owner",
-        template_key: demoPage.template_key,
-        theme_key: demoPage.theme_key,
-        default_subdomain: demoPage.organization_slug,
-        default_url: `http://${demoPage.organization_slug}.lvh.me:3000`
-      }
-    } as T;
-  }
-
-  if (path.includes("/pages/home")) {
-    return demoPage as T;
-  }
-
-  if (path === "/api/v1/admin/organization" && init?.method === "PATCH") {
-    const body = init.body ? JSON.parse(String(init.body)) as Partial<Pick<AdminOrganization, "name" | "city" | "theme_key">> : {};
-    return {
-      id: demoPage.organization_id,
-      name: body.name ?? demoPage.firm_name,
-      slug: demoPage.organization_slug,
-      city: body.city ?? demoPage.city,
-      role: "owner",
-      template_key: demoPage.template_key,
-      theme_key: body.theme_key ?? demoPage.theme_key,
-      default_subdomain: demoPage.organization_slug,
-      default_url: `http://${demoPage.organization_slug}.lvh.me:3000`
-    } as T;
-  }
-
-  if (path === "/api/v1/admin/leads") {
-    return [
-      {
-        id: "lead-1",
-        name: "Sample Client",
-        phone: "+91 98765 43210",
-        email: "client@example.com",
-        service_interest: "GST Registration & Returns",
-        message: "Need help correcting last quarter's returns.",
-        source_page_slug: "home",
-        status: "new",
-        created_at: "2026-06-30T10:00:00+05:30"
-      },
-      {
-        id: "lead-2",
-        name: "Priya Nair",
-        phone: "+91 91234 56789",
-        service_interest: "Accounting & Bookkeeping",
-        source_page_slug: "contact",
-        status: "contacted",
-        created_at: "2026-06-29T15:15:00+05:30"
-      }
-    ] as T;
-  }
-
-  if (init?.method === "POST" || init?.method === "PATCH") {
-    return { ok: true } as T;
-  }
-
-  return {} as T;
-}
-
 export const adminApi = {
   me: () => request<AdminUser>("/api/v1/admin/me"),
-  homePage: async () => {
-    try {
-      return await request<PublicSitePage>("/api/v1/admin/pages/home");
-    } catch {
-      return fetchPublicHomePage();
-    }
-  },
+  homePage: () => request<PublicSitePage>("/api/v1/admin/pages/home"),
   updateDraft: (sections: PageSection[]) =>
     request<{ ok: boolean }>("/api/v1/admin/pages/home/draft", {
       method: "PATCH",

@@ -60,7 +60,7 @@ def me(
     organization = db.get(Organization, tenant.organization_id)
     return MeOut(
         id=user.user_id,
-        email=user.email or "owner@example.com",
+        email=user.email or user.user_id,
         organization=organization_out(db, tenant, settings, organization),
     )
 
@@ -112,14 +112,18 @@ def add_section(payload: DraftUpdate, page_slug: str, tenant: TenantContext = De
 
 @router.patch("/sections/{section_id}", status_code=204)
 def update_section(section_id: str, payload: DraftUpdate, tenant: TenantContext = Depends(require_editor), db: Session = Depends(get_db)) -> None:
-    PageService(db).update_draft(tenant, "home", payload.sections)
+    service = PageService(db)
+    page_slug = service.draft_page_slug_for_section(tenant, section_id)
+    service.update_draft(tenant, page_slug, payload.sections)
 
 
 @router.delete("/sections/{section_id}", status_code=204)
 def delete_section(section_id: str, tenant: TenantContext = Depends(require_editor), db: Session = Depends(get_db)) -> None:
-    page = PageService(db).get_admin_page(tenant, "home")
+    service = PageService(db)
+    page_slug = service.draft_page_slug_for_section(tenant, section_id)
+    page = service.get_admin_page(tenant, page_slug)
     remaining = [section for section in page.sections if section.id != section_id]
-    PageService(db).update_draft(tenant, "home", remaining)
+    service.update_draft(tenant, page_slug, remaining)
 
 
 @router.post("/pages/{page_slug}/reorder", status_code=204)

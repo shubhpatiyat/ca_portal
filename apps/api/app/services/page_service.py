@@ -21,11 +21,15 @@ from app.models import (
 )
 from app.schemas.admin import OnboardingRequest, TenantContext
 from app.schemas.public import ContactDetails, PublicSitePage, SeoPayload
-from app.schemas.sections import PageSection
+from app.schemas.sections import PageSection, validate_sections
 from app.services.default_content import default_home_sections, slugify
 from app.services.section_assets import assert_assets_belong_to_org
 
 section_list_adapter = TypeAdapter(list[PageSection])
+
+
+def validate_section_list(value: list[dict] | list[PageSection]) -> list[PageSection]:
+    return validate_sections(section_list_adapter.validate_python(value))
 
 RESERVED_SUBDOMAINS = {
     "admin",
@@ -95,6 +99,16 @@ def build_platform_url(subdomain: str | None, settings: Settings) -> str | None:
     return f"{scheme}://{hostname}"
 
 
+def build_whatsapp_url(value: str) -> str:
+    cleaned = value.strip()
+    if cleaned.startswith("https://wa.me/"):
+        return cleaned
+    digits = "".join(char for char in cleaned if char.isdigit())
+    if not digits:
+        return "https://wa.me/919000012345"
+    return f"https://wa.me/{digits}"
+
+
 class PageService:
     def __init__(self, db: Session) -> None:
         self.db = db
@@ -128,6 +142,10 @@ class PageService:
             template_key=payload.templateKey,
             theme_key=payload.themeKey,
             default_subdomain=default_subdomain,
+            contact_phone=payload.phone,
+            contact_whatsapp=build_whatsapp_url(payload.whatsapp),
+            contact_email=str(payload.email),
+            contact_address=payload.address,
         )
         self.db.add(config)
         self._ensure_default_domain(organization, settings, default_subdomain)
@@ -145,7 +163,7 @@ class PageService:
         self.db.add(draft_revision)
         self.db.add(published_revision)
         self.db.flush()
-        sections = section_list_adapter.validate_python(default_home_sections(payload))
+        sections = validate_section_list(default_home_sections(payload))
         self._replace_revision_sections(draft_revision.id, sections)
         self._replace_revision_sections(published_revision.id, sections)
         page.current_draft_revision_id = draft_revision.id
@@ -227,7 +245,7 @@ class PageService:
 
     def update_draft(self, tenant: TenantContext, page_slug: str, sections: list[PageSection]) -> None:
         try:
-            validated_sections = section_list_adapter.validate_python([section.model_dump(mode="json") for section in sections])
+            validated_sections = validate_section_list([section.model_dump(mode="json") for section in sections])
             assert_assets_belong_to_org(self.db, tenant.organization_id, validated_sections)
         except (ValidationError, ValueError) as exc:
             raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)) from exc
@@ -247,7 +265,7 @@ class PageService:
         page, draft = self._get_page_and_revision(tenant.organization_id, page_slug, draft=True)
         draft_sections = self._revision_sections(draft.id)
         try:
-            validated_sections = section_list_adapter.validate_python(draft_sections)
+            validated_sections = validate_section_list(draft_sections)
             assert_assets_belong_to_org(self.db, tenant.organization_id, validated_sections)
         except (ValidationError, ValueError) as exc:
             raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)) from exc
@@ -292,7 +310,7 @@ class PageService:
         )
         self.db.add(restored)
         self.db.flush()
-        self._replace_revision_sections(restored.id, section_list_adapter.validate_python(self._revision_sections(revision.id)))
+        self._replace_revision_sections(restored.id, validate_section_list(self._revision_sections(revision.id)))
         page.current_draft_revision_id = restored.id
         self._audit(tenant.organization_id, tenant.user_id, "restored", "page_revision", restored.id, {"from_revision_id": revision_id})
         self.db.commit()
@@ -351,6 +369,20 @@ class PageService:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Page not found.")
         return page
 
+    def draft_page_slug_for_section(self, tenant: TenantContext, section_id: str) -> str:
+        row = self.db.execute(
+            select(WebsitePage.slug)
+            .join(PageRevision, PageRevision.id == WebsitePage.current_draft_revision_id)
+            .join(PageSectionModel, PageSectionModel.revision_id == PageRevision.id)
+            .where(
+                WebsitePage.organization_id == tenant.organization_id,
+                PageSectionModel.id == section_id,
+            )
+        ).first()
+        if not row:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Section not found.")
+        return row[0]
+
     def _get_page_and_revision(self, organization_id: str, page_slug: str, draft: bool) -> tuple[WebsitePage, PageRevision]:
         page = self._page_for_tenant(organization_id, page_slug)
         revision_id = page.current_draft_revision_id if draft else page.current_published_revision_id
@@ -403,8 +435,8 @@ class PageService:
     ) -> PublicSitePage:
         organization = self.db.get(Organization, page.organization_id)
         config = self.db.execute(select(WebsiteConfig).where(WebsiteConfig.organization_id == page.organization_id)).scalar_one()
-        sections = section_list_adapter.validate_python(self._revision_sections(revision.id))
-        contact = self._contact_from_sections(sections)
+        sections = validate_section_list(self._revision_sections(revision.id))
+        contact = self._contact_from_config(config)
         base_url = public_base_url or f"http://localhost:3000/s/{organization_slug}"
         canonical = base_url if page.slug == "home" else f"{base_url}/{page.slug}"
         return PublicSitePage(
@@ -461,12 +493,12 @@ class PageService:
             }
         )
 
-    def _contact_from_sections(self, sections: list[PageSection]) -> ContactDetails:
+    def _contact_from_config(self, config: WebsiteConfig) -> ContactDetails:
         return ContactDetails(
-            phone="+91 90000 12345",
-            whatsapp="https://wa.me/919000012345",
-            email="office@example.com",
-            address="Office address configured during onboarding",
+            phone=config.contact_phone,
+            whatsapp=config.contact_whatsapp,
+            email=config.contact_email,
+            address=config.contact_address,
         )
 
     def _next_version(self, page_id: str) -> int:

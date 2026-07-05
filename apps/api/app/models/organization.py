@@ -54,6 +54,10 @@ class WebsiteConfig(Base, TimestampMixin):
     logo_asset_id: Mapped[str | None] = mapped_column(UUID(as_uuid=False), ForeignKey("media_assets.id"), nullable=True)
     default_subdomain: Mapped[str | None] = mapped_column(String(120), nullable=True)
     published_revision_id: Mapped[str | None] = mapped_column(UUID(as_uuid=False), nullable=True)
+    contact_phone: Mapped[str] = mapped_column(String(32), default="+91 90000 12345", nullable=False)
+    contact_whatsapp: Mapped[str] = mapped_column(String(120), default="https://wa.me/919000012345", nullable=False)
+    contact_email: Mapped[str] = mapped_column(String(255), default="office@example.com", nullable=False)
+    contact_address: Mapped[str] = mapped_column(String(240), default="Office address configured during onboarding", nullable=False)
 
     organization: Mapped[Organization] = relationship(back_populates="website_config")
 

@@ -21,10 +21,6 @@ class SupabaseJWTVerifier:
         self.jwks_client = PyJWKClient(settings.supabase_jwks_url) if settings.supabase_jwks_url else None
 
     def verify(self, token: str) -> AuthenticatedUser:
-        if self.settings.app_env == "development" and token.startswith("dev."):
-            user_id = token.removeprefix("dev.")
-            return AuthenticatedUser(user_id=user_id, email="owner@example.com", claims={"sub": user_id})
-
         if not self.jwks_client or not self.settings.supabase_jwt_issuer:
             raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Supabase JWT verification is not configured.")
 
