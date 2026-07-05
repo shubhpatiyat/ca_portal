@@ -29,6 +29,11 @@ class Organization(Base, TimestampMixin):
 
     members: Mapped[list["OrganizationMember"]] = relationship(back_populates="organization", cascade="all, delete-orphan")
     website_config: Mapped["WebsiteConfig"] = relationship(back_populates="organization", uselist=False, cascade="all, delete-orphan")
+    domains: Mapped[list["Domain"]] = relationship(back_populates="organization", cascade="all, delete-orphan", passive_deletes=True)
+    pages: Mapped[list["WebsitePage"]] = relationship(back_populates="organization", cascade="all, delete-orphan", passive_deletes=True)
+    media_assets: Mapped[list["MediaAsset"]] = relationship(back_populates="organization", cascade="all, delete-orphan", passive_deletes=True)
+    leads: Mapped[list["Lead"]] = relationship(back_populates="organization", cascade="all, delete-orphan", passive_deletes=True)
+    audit_logs: Mapped[list["AuditLog"]] = relationship(back_populates="organization", cascade="all, delete-orphan", passive_deletes=True)
 
 
 class OrganizationMember(Base):
@@ -72,6 +77,8 @@ class Domain(Base):
     is_verified: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
+    organization: Mapped[Organization] = relationship(back_populates="domains")
+
 
 class WebsitePage(Base, TimestampMixin):
     __tablename__ = "website_pages"
@@ -83,6 +90,9 @@ class WebsitePage(Base, TimestampMixin):
     title: Mapped[str] = mapped_column(String(160), nullable=False)
     current_draft_revision_id: Mapped[str | None] = mapped_column(UUID(as_uuid=False), nullable=True)
     current_published_revision_id: Mapped[str | None] = mapped_column(UUID(as_uuid=False), nullable=True)
+
+    organization: Mapped[Organization] = relationship(back_populates="pages")
+    revisions: Mapped[list["PageRevision"]] = relationship(back_populates="page", cascade="all, delete-orphan", passive_deletes=True)
 
 
 class PageRevision(Base):
@@ -97,6 +107,9 @@ class PageRevision(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     published_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
+    page: Mapped[WebsitePage] = relationship(back_populates="revisions")
+    sections: Mapped[list["PageSection"]] = relationship(back_populates="revision", cascade="all, delete-orphan", passive_deletes=True)
+
 
 class PageSection(Base, TimestampMixin):
     __tablename__ = "page_sections"
@@ -110,6 +123,8 @@ class PageSection(Base, TimestampMixin):
     is_visible: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     variant: Mapped[str] = mapped_column(String(64), nullable=False)
     content_json: Mapped[dict] = mapped_column(JSONB, nullable=False)
+
+    revision: Mapped[PageRevision] = relationship(back_populates="sections")
 
 
 class MediaAsset(Base):
@@ -127,6 +142,8 @@ class MediaAsset(Base):
     uploaded_by_user_id: Mapped[str] = mapped_column(UUID(as_uuid=False), nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
+    organization: Mapped[Organization] = relationship(back_populates="media_assets")
+
 
 class Lead(Base):
     __tablename__ = "leads"
@@ -142,6 +159,8 @@ class Lead(Base):
     status: Mapped[str] = mapped_column(String(32), default="new", nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
+    organization: Mapped[Organization] = relationship(back_populates="leads")
+
 
 class AuditLog(Base):
     __tablename__ = "audit_logs"
@@ -154,3 +173,5 @@ class AuditLog(Base):
     entity_id: Mapped[str] = mapped_column(UUID(as_uuid=False), nullable=False)
     metadata_json: Mapped[dict] = mapped_column("metadata", JSONB, default=dict, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    organization: Mapped[Organization] = relationship(back_populates="audit_logs")
