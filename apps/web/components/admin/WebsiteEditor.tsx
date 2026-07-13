@@ -21,6 +21,7 @@ import {
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { PageSection } from "@/types/site";
 import { adminApi } from "@/lib/api/admin";
+import { resolveAdminWebsiteUrl } from "@/lib/admin/website-url";
 import { Button, ButtonLink } from "@/components/ui/Button";
 
 type SectionImportance = "Required" | "Recommended" | "Optional";
@@ -355,6 +356,7 @@ function contextualSuggestions(sections: PageSection[]): typeof suggestedSection
 export function WebsiteEditor() {
   const queryClient = useQueryClient();
   const pageQuery = useQuery({ queryKey: ["admin-page", "home"], queryFn: adminApi.homePage, retry: false });
+  const meQuery = useQuery({ queryKey: ["admin-me"], queryFn: adminApi.me, retry: false });
   const [sections, setSections] = useState<PageSection[]>([]);
   const [dirty, setDirty] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -516,8 +518,13 @@ export function WebsiteEditor() {
     );
   }
 
-  if (showPublishSuccess && pageQuery.data) {
-    const publishedSiteHref = `/s/${pageQuery.data.organization_slug}`;
+  if (showPublishSuccess && pageQuery.data && meQuery.isLoading) {
+    return <div className="rounded-lg border bg-card p-6 text-muted-foreground">Loading website link...</div>;
+  }
+
+  if (showPublishSuccess && pageQuery.data && meQuery.data?.organization) {
+    const organization = meQuery.data.organization;
+    const publishedSiteHref = resolveAdminWebsiteUrl(organization.default_url, organization.slug, organization.default_subdomain);
 
     return (
       <div className="grid min-h-[65vh] place-items-center">

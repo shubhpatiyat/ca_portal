@@ -115,9 +115,17 @@ export function PublicHeader({ page, basePath }: { page: PublicSitePage; basePat
             );
           })}
         </div>
-        <a className="rounded-lg bg-secondary px-5 py-3 text-sm font-semibold uppercase tracking-[0.05em] text-secondary-foreground shadow-sm transition hover:opacity-90 active:scale-95" href={isHomePage ? "#contact" : `${homePath}#contact`} onClick={(event) => handleNavClick(event, "contact")}>
-          Book a Consultation
-        </a>
+        <div className="hidden items-center gap-2 lg:flex">
+          <Link className="rounded-lg border border-border bg-background px-4 py-3 text-sm font-semibold uppercase tracking-[0.05em] text-primary transition hover:bg-muted" href="/client/login">
+            Client Login
+          </Link>
+          <a className="rounded-lg bg-secondary px-5 py-3 text-sm font-semibold uppercase tracking-[0.05em] text-secondary-foreground shadow-sm transition hover:opacity-90 active:scale-95" href={isHomePage ? "#contact" : `${homePath}#contact`} onClick={(event) => handleNavClick(event, "contact")}>
+            Book a Consultation
+          </a>
+        </div>
+        <Link className="rounded-lg border border-border bg-background px-4 py-3 text-sm font-semibold uppercase tracking-[0.05em] text-primary transition hover:bg-muted lg:hidden" href="/client/login">
+          Client Login
+        </Link>
       </nav>
       <div className="section-shell flex gap-2 overflow-x-auto pb-3 md:hidden">
         {nav.map((item) => {
@@ -135,6 +143,9 @@ export function PublicHeader({ page, basePath }: { page: PublicSitePage; basePat
             </Link>
           );
         })}
+        <Link className="whitespace-nowrap rounded-full border border-border bg-background px-3 py-2 text-xs font-semibold uppercase tracking-[0.05em] text-muted-foreground transition" href="/client/login">
+          Client Login
+        </Link>
       </div>
     </header>
   );

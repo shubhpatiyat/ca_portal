@@ -73,8 +73,8 @@ function Hero({ section, page }: SectionProps<HeroSection>) {
   const imageUrl = content.image_url || fallbackImages.hero;
 
   return (
-    <section className="hero-gradient relative overflow-hidden pt-32 pb-24 lg:pt-36 lg:pb-32" id="home">
-      <div className={`section-shell grid gap-16 ${centered ? "text-center" : "items-center lg:grid-cols-2"}`}>
+    <section className="hero-gradient relative overflow-hidden pt-24 pb-20 lg:pt-28 lg:pb-28" id="home">
+      <div className={`section-shell grid gap-16 ${centered ? "text-center" : "items-start lg:grid-cols-2"}`}>
         <div className={centered ? "mx-auto max-w-3xl" : "max-w-2xl"}>
           <p className="mb-6 inline-block rounded-full bg-[#bceecf] px-4 py-1 text-sm font-semibold uppercase tracking-[0.18em] text-[#224f39]">
             {content.eyebrow}

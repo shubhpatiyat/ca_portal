@@ -41,7 +41,16 @@ def seed() -> None:
         )
     default_hostname = build_platform_hostname(DEMO_ORGANIZATION_SLUG, settings)
     if default_hostname and not session.execute(select(Domain).where(Domain.hostname == default_hostname)).scalar_one_or_none():
-        session.add(Domain(organization_id=organization.id, hostname=default_hostname, is_primary=True, is_verified=True))
+        session.add(
+            Domain(
+                organization_id=organization.id,
+                hostname=default_hostname,
+                domain_type="platform",
+                is_primary=True,
+                is_verified=True,
+                verification_status="verified",
+            )
+        )
 
     page = session.execute(select(WebsitePage).where(WebsitePage.organization_id == organization.id, WebsitePage.slug == "home")).scalar_one_or_none()
     if not page:

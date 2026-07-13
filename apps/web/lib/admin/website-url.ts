@@ -8,23 +8,22 @@ export function resolveAdminWebsiteUrl(
   defaultSubdomain?: string | null
 ): string {
   const subdomain = defaultSubdomain || organizationSlug;
-  const pathUrl = `/s/${organizationSlug}`;
 
   if (typeof window === "undefined") {
-    return defaultUrl ?? pathUrl;
+    return defaultUrl ?? `https://${subdomain}`;
   }
 
   if (!defaultUrl) {
-    return isLocalHost(window.location.hostname) ? `http://${subdomain}.lvh.me:${window.location.port || "3000"}` : pathUrl;
+    if (isLocalHost(window.location.hostname)) {
+      return `http://${subdomain}.lvh.me:${window.location.port || "3000"}`;
+    }
+    return `https://${subdomain}`;
   }
 
   try {
     const url = new URL(defaultUrl);
     if (url.hostname.endsWith(".lvh.me") && !url.port) {
       url.port = window.location.port || "3000";
-    }
-    if (window.location.hostname.endsWith(".vercel.app") && url.hostname !== window.location.hostname) {
-      return pathUrl;
     }
     return url.toString();
   } catch {

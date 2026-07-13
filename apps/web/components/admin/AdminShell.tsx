@@ -8,6 +8,8 @@ import {
   BadgeCheck,
   BriefcaseBusiness,
   Building2,
+  ContactRound,
+  Files,
   Home,
   Inbox,
   LayoutDashboard,
@@ -23,6 +25,8 @@ import { resolveAdminWebsiteUrl } from "@/lib/admin/website-url";
 
 const navItems = [
   { label: "Overview", href: "/admin/dashboard", icon: LayoutDashboard },
+  { label: "Clients", href: "/admin/clients", icon: ContactRound },
+  { label: "Documents", href: "/admin/documents", icon: Files },
   { label: "My Website", href: "/admin/website", icon: Home },
   { label: "Services", href: "/admin/services", icon: BriefcaseBusiness },
   { label: "Client Reviews", href: "/admin/reviews", icon: MessageSquareQuote },

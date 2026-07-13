@@ -31,6 +31,122 @@ export type Lead = {
   created_at: string;
 };
 
+export type FirmClient = {
+  id: string;
+  name: string;
+  mobile: string;
+  email?: string | null;
+  address?: string | null;
+  city?: string | null;
+  state?: string | null;
+  portal_enabled: boolean;
+  status: "active" | "inactive" | "blocked";
+  company_count: number;
+  document_count: number;
+  generated_password?: string | null;
+  created_at: string;
+};
+
+export type ClientCompany = {
+  id: string;
+  client_id: string;
+  client_name: string;
+  company_name: string;
+  company_type: "Individual" | "HUF" | "Partnership" | "LLP" | "Company" | "AOP" | "BOI" | "OJP";
+  registered_address?: string | null;
+  registration_number?: string | null;
+  registered_email?: string | null;
+  pan?: string | null;
+  gst?: string | null;
+  other_id_type?: string | null;
+  other_id_value?: string | null;
+  portal_visible: boolean;
+  can_upload: boolean;
+  can_download: boolean;
+  can_view_billing: boolean;
+  can_view_tally: boolean;
+  document_count: number;
+  created_at: string;
+};
+
+export type CompanyDocument = {
+  id: string;
+  client_id: string;
+  client_name: string;
+  company_id: string;
+  company_name: string;
+  financial_year: string;
+  month?: string | null;
+  document_type: string;
+  document_name: string;
+  status: "requested" | "uploading" | "uploaded" | "under_review" | "approved" | "rejected" | "shared";
+  visible_to_client: boolean;
+  allow_client_upload: boolean;
+  allow_client_download: boolean;
+  storage_provider: string;
+  storage_path?: string | null;
+  web_url?: string | null;
+  size_bytes?: number | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type FirmClientPayload = {
+  name: string;
+  mobile: string;
+  email: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  portal_enabled: boolean;
+};
+
+export type ClientCompanyPayload = {
+  client_id: string;
+  company_name: string;
+  company_type: ClientCompany["company_type"];
+  registered_address?: string;
+  registration_number?: string;
+  registered_email?: string;
+  pan?: string;
+  gst?: string;
+  portal_visible: boolean;
+  can_upload: boolean;
+  can_download: boolean;
+  can_view_billing: boolean;
+  can_view_tally: boolean;
+};
+
+export type CompanyDocumentPayload = {
+  company_id: string;
+  financial_year: string;
+  month?: string;
+  document_type: string;
+  document_name: string;
+  status: CompanyDocument["status"];
+  visible_to_client: boolean;
+  allow_client_upload: boolean;
+  allow_client_download: boolean;
+  storage_provider: "onedrive" | "manual";
+  storage_path?: string;
+  web_url?: string;
+};
+
+export type CustomDomain = {
+  id: string;
+  hostname: string;
+  domain_type: "platform" | "custom";
+  is_primary: boolean;
+  is_verified: boolean;
+  verification_status: "pending" | "verified" | "failed";
+  verification_record_name?: string | null;
+  verification_record_value?: string | null;
+  dns_target?: string | null;
+  verified_at?: string | null;
+  last_checked_at?: string | null;
+  created_at: string;
+};
+
 export type OnboardingPayload = {
   firmName: string;
   founderName: string;
@@ -108,6 +224,42 @@ export const adminApi = {
     request<AdminOrganization>("/api/v1/admin/organization", {
       method: "PATCH",
       body: JSON.stringify(payload)
+    }),
+  clients: () => request<FirmClient[]>("/api/v1/admin/clients"),
+  createClient: (payload: FirmClientPayload) =>
+    request<FirmClient>("/api/v1/admin/clients", {
+      method: "POST",
+      body: JSON.stringify(payload)
+    }),
+  companies: () => request<ClientCompany[]>("/api/v1/admin/companies"),
+  createCompany: (payload: ClientCompanyPayload) =>
+    request<ClientCompany>("/api/v1/admin/companies", {
+      method: "POST",
+      body: JSON.stringify(payload)
+    }),
+  documents: () => request<CompanyDocument[]>("/api/v1/admin/documents"),
+  createDocument: (payload: CompanyDocumentPayload) =>
+    request<CompanyDocument>("/api/v1/admin/documents", {
+      method: "POST",
+      body: JSON.stringify(payload)
+    }),
+  domains: () => request<CustomDomain[]>("/api/v1/admin/domains"),
+  addDomain: (hostname: string) =>
+    request<CustomDomain>("/api/v1/admin/domains", {
+      method: "POST",
+      body: JSON.stringify({ hostname })
+    }),
+  verifyDomain: (domainId: string) =>
+    request<CustomDomain>(`/api/v1/admin/domains/${domainId}/verify`, {
+      method: "POST"
+    }),
+  makeDomainPrimary: (domainId: string) =>
+    request<CustomDomain>(`/api/v1/admin/domains/${domainId}/primary`, {
+      method: "POST"
+    }),
+  deleteDomain: (domainId: string) =>
+    request<{ ok: boolean }>(`/api/v1/admin/domains/${domainId}`, {
+      method: "DELETE"
     }),
   leads: () => request<Lead[]>("/api/v1/admin/leads"),
   updateLead: (leadId: string, status: Lead["status"]) =>

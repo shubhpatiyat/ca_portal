@@ -20,6 +20,9 @@ class Settings(BaseSettings):
     next_revalidate_secret: str | None = None
     platform_domain: str = "lvh.me"
     platform_scheme: str = "http"
+    custom_domain_cname_target: str = "cname.vercel-dns.com"
+    custom_domain_txt_prefix: str = "_ca-site"
+    client_portal_jwt_secret: str = "dev-client-portal-secret-change-me"
     log_level: str = "INFO"
 
     model_config = SettingsConfigDict(env_file=API_DIR / ".env", env_file_encoding="utf-8", extra="ignore")
@@ -43,7 +46,7 @@ class Settings(BaseSettings):
         if self.cors_allow_origin_regex_value:
             return self.cors_allow_origin_regex_value
         if self.app_env == "development":
-            return r"^https?://(localhost|127\.0\.0\.1):\d+$"
+            return r"^https?://([a-z0-9-]+\.)?lvh\.me:\d+$|^https?://(localhost|127\.0\.0\.1):\d+$"
         return None
 
     @property

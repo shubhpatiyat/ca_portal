@@ -231,11 +231,20 @@ class PageService:
             if domain.organization_id != organization.id:
                 raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Default domain is already assigned.")
             domain.organization_id = organization.id
+            domain.domain_type = "platform"
             domain.is_verified = True
+            domain.verification_status = "verified"
             if not domain.is_primary:
                 domain.is_primary = True
             return domain
-        domain = Domain(organization_id=organization.id, hostname=hostname, is_primary=True, is_verified=True)
+        domain = Domain(
+            organization_id=organization.id,
+            hostname=hostname,
+            domain_type="platform",
+            is_primary=True,
+            is_verified=True,
+            verification_status="verified",
+        )
         self.db.add(domain)
         return domain
 
