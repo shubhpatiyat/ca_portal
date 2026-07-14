@@ -11,12 +11,10 @@ type LeadFormValues = z.infer<typeof leadFormSchema>;
 
 export function LeadForm({
   organizationSlug,
-  pageSlug,
-  services
+  pageSlug
 }: {
   organizationSlug: string;
   pageSlug: string;
-  services: string[];
 }) {
   const [saved, setSaved] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -24,9 +22,12 @@ export function LeadForm({
     resolver: zodResolver(leadFormSchema),
     defaultValues: {
       name: "",
+      business_name: "",
+      city: "",
       phone: "",
       email: "",
-      service_interest: services[0] ?? "",
+      inquiry_type: "Free consultation",
+      service_interest: "Free consultation",
       message: "",
       website: ""
     }
@@ -40,7 +41,10 @@ export function LeadForm({
         name: values.name,
         phone: values.phone,
         email: values.email || undefined,
-        service_interest: values.service_interest,
+        business_name: values.business_name || undefined,
+        city: values.city || undefined,
+        inquiry_type: values.inquiry_type,
+        service_interest: values.inquiry_type,
         message: values.message,
         website: values.website
       });
@@ -56,10 +60,20 @@ export function LeadForm({
     >
       <div className="grid gap-6">
         <label className="grid gap-2 text-sm font-medium">
-          Full Name
+          Name
           <input className="min-h-12 rounded-lg border border-border bg-muted/55 px-3 outline-none transition focus:border-secondary focus:ring-2 focus:ring-secondary/30" placeholder="Enter your name" {...form.register("name")} />
           {form.formState.errors.name ? <span className="text-destructive">{form.formState.errors.name.message}</span> : null}
         </label>
+        <div className="grid gap-6 md:grid-cols-2">
+          <label className="grid gap-2 text-sm font-medium">
+            Business Name
+            <input className="min-h-12 rounded-lg border border-border bg-muted/55 px-3 outline-none transition focus:border-secondary focus:ring-2 focus:ring-secondary/30" placeholder="Your business name" {...form.register("business_name")} />
+          </label>
+          <label className="grid gap-2 text-sm font-medium">
+            City
+            <input className="min-h-12 rounded-lg border border-border bg-muted/55 px-3 outline-none transition focus:border-secondary focus:ring-2 focus:ring-secondary/30" placeholder="Your city" {...form.register("city")} />
+          </label>
+        </div>
         <label className="grid gap-2 text-sm font-medium">
           Phone Number
           <input className="min-h-12 rounded-lg border border-border bg-muted/55 px-3 outline-none transition focus:border-secondary focus:ring-2 focus:ring-secondary/30" placeholder="+91 98765 43210" {...form.register("phone")} />
@@ -69,12 +83,12 @@ export function LeadForm({
           <input className="min-h-12 rounded-lg border border-border bg-muted/55 px-3 outline-none transition focus:border-secondary focus:ring-2 focus:ring-secondary/30" placeholder="you@example.com" type="email" {...form.register("email")} />
         </label>
         <label className="grid gap-2 text-sm font-medium">
-          Service Required
-          <select className="min-h-12 rounded-lg border border-border bg-muted/55 px-3 outline-none transition focus:border-secondary focus:ring-2 focus:ring-secondary/30" {...form.register("service_interest")}>
-            {services.map((service) => (
-              <option key={service}>{service}</option>
-            ))}
-            <option>General consultation</option>
+          What are you looking for?
+          <select className="min-h-12 rounded-lg border border-border bg-muted/55 px-3 outline-none transition focus:border-secondary focus:ring-2 focus:ring-secondary/30" {...form.register("inquiry_type")}>
+            <option>Free consultation</option>
+            <option>General inquiry</option>
+            <option>Join our team</option>
+            <option>Other</option>
           </select>
         </label>
         <label className="grid gap-2 text-sm font-medium">

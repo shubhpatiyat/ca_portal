@@ -6,10 +6,9 @@ import type { PublicSitePage } from "@/types/site";
 import { brandInitials } from "@/lib/brand";
 
 const sectionNav = [
-  { label: "Services", sectionId: "services", pageSlug: "services" },
-  { label: "About", sectionId: "about", pageSlug: "about" },
+  { label: "How It Works", sectionId: "how-we-work", pageSlug: "home" },
   { label: "Security", sectionId: "security", pageSlug: "home" },
-  { label: "Contact", sectionId: "contact", pageSlug: "contact" }
+  { label: "FAQ", sectionId: "faq", pageSlug: "home" }
 ] as const;
 
 export function PublicHeader({ page, basePath }: { page: PublicSitePage; basePath?: string }) {
@@ -115,17 +114,22 @@ export function PublicHeader({ page, basePath }: { page: PublicSitePage; basePat
             );
           })}
         </div>
-        <div className="hidden items-center gap-2 lg:flex">
-          <Link className="rounded-lg border border-border bg-background px-4 py-3 text-sm font-semibold uppercase tracking-[0.05em] text-primary transition hover:bg-muted" href="/client/login">
+        <div className="hidden items-center gap-4 lg:flex">
+          <Link className="px-2 py-3 text-sm font-semibold text-muted-foreground transition hover:text-primary" href="/client/login">
             Client Login
           </Link>
           <a className="rounded-lg bg-secondary px-5 py-3 text-sm font-semibold uppercase tracking-[0.05em] text-secondary-foreground shadow-sm transition hover:opacity-90 active:scale-95" href={isHomePage ? "#contact" : `${homePath}#contact`} onClick={(event) => handleNavClick(event, "contact")}>
-            Book a Consultation
+            Free Consultation
           </a>
         </div>
-        <Link className="rounded-lg border border-border bg-background px-4 py-3 text-sm font-semibold uppercase tracking-[0.05em] text-primary transition hover:bg-muted lg:hidden" href="/client/login">
-          Client Login
-        </Link>
+        <div className="flex items-center gap-3 lg:hidden">
+          <Link className="text-xs font-semibold text-muted-foreground" href="/client/login">
+            Login
+          </Link>
+          <a className="rounded-lg bg-secondary px-4 py-3 text-xs font-semibold uppercase tracking-[0.05em] text-secondary-foreground shadow-sm transition hover:opacity-90" href={isHomePage ? "#contact" : `${homePath}#contact`} onClick={(event) => handleNavClick(event, "contact")}>
+            Consult
+          </a>
+        </div>
       </nav>
       <div className="section-shell flex gap-2 overflow-x-auto pb-3 md:hidden">
         {nav.map((item) => {
@@ -143,9 +147,6 @@ export function PublicHeader({ page, basePath }: { page: PublicSitePage; basePat
             </Link>
           );
         })}
-        <Link className="whitespace-nowrap rounded-full border border-border bg-background px-3 py-2 text-xs font-semibold uppercase tracking-[0.05em] text-muted-foreground transition" href="/client/login">
-          Client Login
-        </Link>
       </div>
     </header>
   );

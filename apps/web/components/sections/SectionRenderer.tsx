@@ -6,6 +6,7 @@ import {
   BookOpenCheck,
   CalendarDays,
   ClipboardList,
+  Eye,
   EyeOff,
   FileCheck2,
   ReceiptIndianRupee,
@@ -37,6 +38,8 @@ const iconRegistry = {
   ReceiptIndianRupee,
   BadgeIndianRupee,
   BookOpenCheck,
+  CalendarDays,
+  Eye,
   UsersRound,
   FileCheck2
 };
@@ -171,14 +174,14 @@ function ImageText({ section }: SectionProps<ImageTextSection>) {
   if (/security|secure|confidential|data|document/i.test(text)) {
     return <SecuritySection section={section} />;
   }
-  if (/behind|slipping|deadline|cash flow|messy|pain|problem|growth/i.test(text)) {
+  if (!/why we started|about/i.test(text) && /behind|slipping|deadline|cash flow|messy|pain|problem|growth/i.test(text)) {
     return <PainSection section={section} />;
   }
 
   const reverse = section.variant === "image_right";
   const imageUrl = section.content_json.image_url || fallbackImages.office;
   return (
-    <section className="bg-white py-24">
+    <section className="bg-white py-24" id="about">
       <div className={`section-shell grid gap-16 lg:grid-cols-2 lg:items-center ${reverse ? "" : "lg:[&>*:first-child]:order-2"}`}>
         <div>
           {section.content_json.eyebrow ? (
@@ -381,7 +384,7 @@ function ContactForm({ section, page }: SectionProps<ContactFormSection>) {
             <h2 className="font-serif text-3xl font-semibold text-primary md:text-5xl">{section.content_json.heading}</h2>
             <p className="mt-4 max-w-2xl leading-8 text-muted-foreground">{section.content_json.description}</p>
             <div className="mt-8">
-              <LeadForm organizationSlug={page.organization_slug} pageSlug={page.page_slug} services={servicesForPage(page)} />
+              <LeadForm organizationSlug={page.organization_slug} pageSlug={page.page_slug} />
             </div>
           </div>
           <div className="flex flex-col justify-between bg-primary p-8 text-primary-foreground lg:p-14">
@@ -415,6 +418,15 @@ function ContactForm({ section, page }: SectionProps<ContactFormSection>) {
                     </div>
                   </div>
                 ) : null}
+                {section.content_json.business_hours ? (
+                  <div className="flex gap-4">
+                    <CalendarDays className="text-[#bceecf]" size={22} aria-hidden="true" />
+                    <div>
+                      <div className="font-semibold text-white">Business Hours</div>
+                      <div className="mt-1 opacity-80">{section.content_json.business_hours}</div>
+                    </div>
+                  </div>
+                ) : null}
               </div>
             </div>
             {section.content_json.show_whatsapp ? (
@@ -440,7 +452,7 @@ function RichText({ section }: SectionProps<RichTextSection>) {
       <div className="section-shell">
         <div className="mx-auto mb-14 max-w-2xl text-center">
           <h2 className="font-serif text-3xl font-semibold text-primary md:text-5xl">{section.content_json.heading}</h2>
-          <p className="mt-4 text-muted-foreground">A streamlined process to take the accounting weight off your shoulders.</p>
+          <p className="mt-4 text-muted-foreground">A simple, secure transition from scattered accounts work to a steady monthly rhythm.</p>
         </div>
         <div className="mx-auto grid max-w-4xl gap-4">
           {paragraphs.map((paragraph, index) => {
@@ -467,11 +479,6 @@ function RichText({ section }: SectionProps<RichTextSection>) {
       </div>
     </section>
   );
-}
-
-function servicesForPage(page: PublicSitePage): string[] {
-  const serviceSection = page.sections.find((section): section is ServiceGridSection => section.section_type === "service_grid");
-  return serviceSection?.content_json.services.map((service) => service.title) ?? [];
 }
 
 export const sectionRegistry = {

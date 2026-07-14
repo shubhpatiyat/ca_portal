@@ -65,30 +65,29 @@ function previewDefaultUrl(firmName: string): string {
 
 function landingPagePreview(values: OnboardingValues) {
   const firmName = values.firmName || "Your firm";
-  const founderName = values.founderName || "Your founder";
   const city = values.city || "your city";
   const selectedServices = values.services.length ? values.services : ["Your services"];
 
   return [
     {
       title: "Hero",
-      description: `Trusted tax, GST and compliance support in ${city}.`,
-      detail: `${firmName} helps clients keep tax, GST, bookkeeping and compliance work moving with confidence.`
+      description: "Accurate Books. On Time, Every Time.",
+      detail: `${firmName} gets a consultation-focused outsourced accounts landing page for MSMEs in ${city}.`
     },
     {
-      title: "Services",
-      description: `${selectedServices.length} service${selectedServices.length === 1 ? "" : "s"} selected.`,
+      title: "Value propositions",
+      description: "Cost savings, accuracy, scale, and transparency.",
       detail: selectedServices.join(", ")
     },
     {
-      title: "Founder profile",
-      description: founderName,
-      detail: `${founderName} leads ${firmName} with a focus on timely compliance and clear advice.`
+      title: "About story",
+      description: "Why We Started This",
+      detail: "The first draft explains the MSME accounting gap this firm was built to close."
     },
     {
-      title: "Trust proof",
-      description: "Reliable finance operations support.",
-      detail: "The first draft includes proof points that you can edit after onboarding."
+      title: "Security and FAQ",
+      description: "Data care, NDA commitment, and common buyer questions.",
+      detail: "The first draft includes detailed security copy and FAQ answers."
     },
     {
       title: "Contact section",

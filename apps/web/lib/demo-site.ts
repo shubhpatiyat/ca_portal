@@ -11,9 +11,9 @@ export const demoPage: PublicSitePage = {
   page_title: "Home",
   published_at: "2026-06-30T09:00:00+05:30",
   seo: {
-    title: "Sample CA Firm | Tax, GST and Compliance Support",
+    title: "Outsourced Accounts Management for MSMEs | Sample CA Firm",
     description:
-      "Chartered Accountants for income tax, GST, bookkeeping, payroll, audit support and business compliance.",
+      "Expert outsourced accounts management for growing businesses: accurate books, on-time payments, full transparency. No in-house overhead. Free consultation.",
     canonical_url: "http://localhost:3000/s/sample-ca-firm"
   },
   contact: {
@@ -30,66 +30,50 @@ export const demoPage: PublicSitePage = {
       is_visible: true,
       variant: "image_right",
       content_json: {
-        eyebrow: "Trusted CA Services",
-        title: "Trusted Tax, GST and Compliance Support",
+        eyebrow: "Outsourced accounts management",
+        title: "Accurate Books. On Time, Every Time.",
         description:
-          "Launch reliable compliance workflows with a CA firm that keeps your books, filings and decisions moving without last-minute stress.",
+          "Get a dedicated team handling your books, payables, and receivables, so you can focus on growing the business, not chasing invoices.",
         image_url:
           "https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&w=1200&q=80",
-        primary_cta: { label: "Book a consultation", href: "#contact" },
-        secondary_cta: { label: "View services", href: "/s/sample-ca-firm/services" }
-      }
-    },
-    {
-      id: "trust-home",
-      section_type: "trust_stats",
-      position: 2,
-      is_visible: true,
-      variant: "cards",
-      content_json: {
-        heading: "Calm, measurable compliance support",
-        stats: [
-          { value: "40+", label: "SMEs supported" },
-          { value: "12 yrs", label: "Practice experience" },
-          { value: "100%", label: "Deadline visibility" }
-        ]
+        primary_cta: { label: "Book a Free Consultation", href: "#contact" },
+        secondary_cta: { label: "See How It Works", href: "#how-we-work" }
       }
     },
     {
       id: "services-home",
       section_type: "service_grid",
-      position: 3,
+      position: 2,
       is_visible: true,
-      variant: "three_columns",
+      variant: "two_columns",
       content_json: {
-        heading: "Services your firm can publish in minutes",
+        heading: "Accounts operations without the in-house overhead",
         subheading:
-          "Choose approved CA service blocks, edit plain-language descriptions, and keep the site consistent.",
+          "A dependable back-office accounts team for growing businesses that need accuracy, visibility, and rhythm.",
         services: [
           {
-            title: "Income Tax Filing",
-            description: "Planning, return preparation and notice support for individuals and business owners.",
-            icon: "ReceiptIndianRupee"
-          },
-          {
-            title: "GST Registration & Returns",
-            description: "Registration, monthly returns, reconciliation and advisory for growing businesses.",
+            title: "Cost savings without compromise",
+            description:
+              "Hiring a full in-house accounts team means salaries, benefits, training, and turnover risk. We give you senior-level expertise at a fraction of the cost, with no hiring headaches.",
             icon: "BadgeIndianRupee"
           },
           {
-            title: "Accounting & Bookkeeping",
-            description: "Clean monthly books, reports and review rhythms your team can trust.",
-            icon: "BookOpenCheck"
+            title: "Always on time, always accurate",
+            description:
+              "Late payments and reconciliation errors cost you money and relationships. Our process is built around deadlines: every invoice, every payment, every report, on schedule.",
+            icon: "CalendarDays"
           },
           {
-            title: "TDS & Payroll Compliance",
-            description: "Salary processing, TDS returns and statutory compliance calendars.",
+            title: "Built to scale with you",
+            description:
+              "Whether you process 50 invoices a month or 5,000, our systems flex with your growth. No need to rehire or retrain as you expand.",
             icon: "UsersRound"
           },
           {
-            title: "Audit & Financial Reporting",
-            description: "Audit-ready statements and management reporting for better decisions.",
-            icon: "FileCheck2"
+            title: "Full transparency, no black box",
+            description:
+              "You get clear visibility into your accounts through dashboards, regular reports, and a direct line to your account manager. Nothing hidden, nothing delayed.",
+            icon: "Eye"
           }
         ]
       }
@@ -97,85 +81,106 @@ export const demoPage: PublicSitePage = {
     {
       id: "pain-home",
       section_type: "image_text",
-      position: 4,
+      position: 3,
       is_visible: true,
       variant: "image_right",
       content_json: {
-        eyebrow: "When finance work starts slipping",
-        heading: "We help stabilize the back office before it slows growth.",
+        eyebrow: "Why we started this",
+        heading: "Built for owners who need dependable accounts support.",
         body:
-          "Books behind schedule, compliance deadlines approaching, and documents scattered across email and WhatsApp can slow down business decisions. We bring the work back into a clear monthly rhythm.",
+          "This firm did not start in a boardroom. It started from watching, up close, how small and medium businesses actually work. Growing up around a family business, and later working closely with MSMEs, we noticed a pattern: business owners were sharp at operations and strategy, but always stuck depending on finding the perfect accountant, someone who got the numbers right and was easy to communicate with. That is the gap we built this firm to close.",
         cta: { label: "Talk to us", href: "#contact" }
       }
     },
     {
       id: "process-home",
       section_type: "rich_text",
-      position: 5,
+      position: 4,
       is_visible: true,
       variant: "article",
       content_json: {
-        heading: "How we work",
+        heading: "Onboarding in 5 Simple Steps",
         markdown:
-          "1. Free consultation - We understand your current setup and pain points.\n2. Custom proposal - You get a clear scope and transparent pricing.\n3. Secure onboarding - Documents, access, and responsibilities are set up safely.\n4. Transition and cleanup - We reconcile data and set monthly workflows.\n5. Ongoing management - You get reporting, compliance reminders, and support."
+          "1. Free consultation - We understand your business, current setup, and pain points.\n2. Custom proposal - Tailored scope of services and transparent pricing, with no hidden fees.\n3. Secure onboarding - NDA signed, document portal set up, and team assigned.\n4. Transition and setup - We migrate data, reconcile opening balances, and set workflows.\n5. Ongoing management - Monthly reporting, proactive compliance, and always-available support."
       }
     },
     {
       id: "security-home",
       section_type: "image_text",
-      position: 6,
+      position: 5,
       is_visible: true,
       variant: "image_left",
       content_json: {
-        eyebrow: "Data security",
-        heading: "Sensitive financial data is handled with controlled access.",
+        eyebrow: "Data security and confidentiality",
+        heading: "Your Financial Data, Handled with Care",
         body:
-          "Client documents, credentials, and financial records need careful handling. Secure document workflows, role-based access, review trails, and confidentiality practices make onboarding safer.",
-        cta: { label: "Read security policy", href: "/security" }
+          "Your books contain some of the most sensitive information about your business, and we treat it that way. Financial documents and finalized reports are stored and managed on Microsoft OneDrive with Microsoft 365 security features including encryption and access controls. As we grow, we are implementing a formal data protection policy covering restricted physical device access, secured email communication, and controls against unauthorized third-party apps or websites on work systems. Our workspace is monitored by CCTV, and every team member signs an NDA before accessing client data. Security is part of how we are building the business from day one.",
+        cta: { label: "Ask about our safeguards", href: "#contact" }
       }
     },
     {
-      id: "founder-home",
-      section_type: "founder_profile",
-      position: 7,
+      id: "faq-home",
+      section_type: "faq",
+      position: 6,
       is_visible: true,
-      variant: "portrait_card",
+      variant: "accordion",
       content_json: {
-        founder_name: "CA Founder Name",
-        designation: "Founder and Senior Partner",
-        bio:
-          "The founder works with businesses that want dependable compliance without generic templates or confusing content tools.",
-        image_url:
-          "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=900&q=80",
-        credentials: ["FCA", "DISA (ICAI)", "GST and income tax advisory"]
+        heading: "Frequently Asked Questions",
+        items: [
+          {
+            question: "How is my financial data kept secure?",
+            answer: "Your data is protected through OneDrive and Microsoft 365 security, NDAs, and physical safeguards. See our Data Security section above for the full approach."
+          },
+          {
+            question: "Do I have to change my CA?",
+            answer: "No. We are not here to replace your Chartered Accountant. We bridge communication between you and your CA, and support them by keeping your books organized, accurate, and audit-ready."
+          },
+          {
+            question: "What accounting software do you work with?",
+            answer: "We currently work with Tally Prime, and we are actively expanding support for platforms including Marg, QuickBooks, Xero, and others. If your business uses another system, tell us and we can discuss compatibility."
+          },
+          {
+            question: "How quickly can you onboard my business?",
+            answer: "Typical onboarding takes 15 to 20 days, depending on account complexity and your current systems. We are refining the process toward onboarding most businesses in as little as one week."
+          },
+          {
+            question: "How do I share raw documents or invoices with you?",
+            answer: "You can share raw documents, invoices, statements, and other records through a dedicated shared drive from mobile, tablet, laptop, or desktop. You can also drop physical documents at our office."
+          },
+          {
+            question: "Do you handle GST or tax filing, or only bookkeeping and accounts management?",
+            answer: "Yes, we offer GST and tax filing services. It is optional: if you already have a CA or accountant for filings, we are happy to support that relationship rather than replace it."
+          }
+        ]
       }
     },
     {
       id: "cta-home",
       section_type: "cta_banner",
-      position: 8,
+      position: 7,
       is_visible: true,
       variant: "solid",
       content_json: {
-        heading: "Ready to make finance work predictable?",
-        description: "Start with a short consultation and leave with a clearer next step.",
-        primary_cta: { label: "Book a free call", href: "#contact" }
+        heading: "Your Books, Our Move",
+        description: "One conversation is all it takes to see what a well-managed accounts process can feel like.",
+        primary_cta: { label: "Book a Free Consultation", href: "#contact" }
       }
     },
     {
       id: "contact-home",
       section_type: "contact_form",
-      position: 9,
+      position: 8,
       is_visible: true,
       variant: "standard",
       content_json: {
-        heading: "Start with a practical consultation",
+        heading: "Your Books, Our Move",
         description:
-          "Tell us what you need help with. We will respond with the right next step for tax, GST, bookkeeping or compliance work.",
+          "One conversation is all it takes, whether you are here to see what a well-managed accounts process feels like or to explore joining the team behind it.",
         show_whatsapp: true,
         show_phone: true,
         show_email: true,
-        show_map: true
+        show_map: true,
+        business_hours: "Monday to Saturday, 10:00 AM to 6:00 PM"
       }
     }
   ]
@@ -187,7 +192,9 @@ export function pageFromSlug(pageSlug: string): PublicSitePage {
   }
 
   const serviceSection = demoPage.sections.find((section) => section.section_type === "service_grid");
-  const founderSection = demoPage.sections.find((section) => section.section_type === "founder_profile");
+  const aboutSection = demoPage.sections.find(
+    (section) => section.section_type === "image_text" && /why we started this/i.test(section.content_json.eyebrow ?? "")
+  );
   const contactSection = demoPage.sections.find((section) => section.section_type === "contact_form");
 
   const pageMap: Record<string, PublicSitePage> = {
@@ -211,7 +218,7 @@ export function pageFromSlug(pageSlug: string): PublicSitePage {
         title: "About | Sample CA Firm",
         canonical_url: "http://localhost:3000/s/sample-ca-firm/about"
       },
-      sections: founderSection ? [founderSection, contactSection].filter(Boolean) as PublicSitePage["sections"] : demoPage.sections
+      sections: aboutSection ? [aboutSection, contactSection].filter(Boolean) as PublicSitePage["sections"] : demoPage.sections
     },
     contact: {
       ...demoPage,

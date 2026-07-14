@@ -159,6 +159,7 @@ class ContactFormContent(BaseModel):
     show_phone: bool = True
     show_email: bool = True
     show_map: bool = True
+    business_hours: ShortText | None = None
 
 
 class ContactFormSection(SectionBase):

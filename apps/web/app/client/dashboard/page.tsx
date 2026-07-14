@@ -30,22 +30,27 @@ export default function ClientDashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [uploadDocument, setUploadDocument] = useState<ClientPortalDocument | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [locallyUploadedIds, setLocallyUploadedIds] = useState<Set<string>>(new Set());
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
-  useEffect(() => {
-    clientPortalApi
+  function loadDashboard() {
+    return clientPortalApi
       .dashboard()
       .then(setData)
       .catch((caught) => setError(caught instanceof Error ? caught.message : "Client login is required."))
       .finally(() => setIsLoading(false));
+  }
+
+  useEffect(() => {
+    loadDashboard();
   }, []);
 
   const visibleDocuments = data?.documents ?? [];
   const pendingDocuments = useMemo(
-    () => visibleDocuments.filter((document) => pendingStatuses.has(document.status) && !locallyUploadedIds.has(document.id)),
-    [locallyUploadedIds, visibleDocuments]
+    () => visibleDocuments.filter((document) => pendingStatuses.has(document.status)),
+    [visibleDocuments]
   );
-  const sharedDocuments = visibleDocuments.filter((document) => !pendingStatuses.has(document.status) || locallyUploadedIds.has(document.id));
+  const sharedDocuments = visibleDocuments.filter((document) => !pendingStatuses.has(document.status));
 
   function signOut() {
     clientPortalApi.clearToken();
@@ -61,14 +66,36 @@ export default function ClientDashboardPage() {
   function closeUpload() {
     setUploadDocument(null);
     setSelectedFile(null);
+    setUploadError(null);
   }
 
-  function confirmUpload() {
+  async function confirmUpload() {
     if (!uploadDocument || !selectedFile) {
       return;
     }
-    setLocallyUploadedIds((current) => new Set(current).add(uploadDocument.id));
-    closeUpload();
+    setIsUploading(true);
+    setUploadError(null);
+    try {
+      const result = await clientPortalApi.uploadDocument(uploadDocument.id, {
+        file_name: selectedFile.name,
+        file_size: selectedFile.size,
+        mime_type: selectedFile.type || undefined
+      });
+      setData((current) => {
+        if (!current) {
+          return current;
+        }
+        return {
+          ...current,
+          documents: current.documents.map((document) => (document.id === result.document.id ? result.document : document))
+        };
+      });
+      closeUpload();
+    } catch (caught) {
+      setUploadError(caught instanceof Error ? caught.message : "Could not upload this file. Please try again.");
+    } finally {
+      setIsUploading(false);
+    }
   }
 
   if (error) {
@@ -147,7 +174,7 @@ export default function ClientDashboardPage() {
           ) : null}
           <div className="grid gap-3 md:grid-cols-2">
             {sharedDocuments.map((document) => (
-              <SharedDocumentCard document={document} key={document.id} isLocalSuccess={locallyUploadedIds.has(document.id)} />
+              <SharedDocumentCard document={document} key={document.id} />
             ))}
           </div>
         </section>
@@ -186,6 +213,8 @@ export default function ClientDashboardPage() {
           onChooseFile={chooseFile}
           onClose={closeUpload}
           onConfirm={confirmUpload}
+          error={uploadError}
+          isUploading={isUploading}
         />
       ) : null}
     </main>
@@ -235,11 +264,11 @@ function UploadTaskCard({ document, onUpload }: { document: ClientPortalDocument
   );
 }
 
-function SharedDocumentCard({ document, isLocalSuccess }: { document: ClientPortalDocument; isLocalSuccess: boolean }) {
+function SharedDocumentCard({ document }: { document: ClientPortalDocument }) {
   return (
     <article className="flex items-start gap-3 rounded-lg border bg-background p-4">
       <div className="grid h-11 w-11 shrink-0 place-items-center rounded-md bg-accent/10 text-accent">
-        {isLocalSuccess ? <CheckCircle2 size={20} /> : <FileCheck2 size={20} />}
+        {document.status === "uploaded" ? <CheckCircle2 size={20} /> : <FileCheck2 size={20} />}
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
@@ -247,8 +276,8 @@ function SharedDocumentCard({ document, isLocalSuccess }: { document: ClientPort
             <h3 className="truncate font-semibold text-primary">{document.document_name}</h3>
             <p className="mt-1 text-sm text-muted-foreground">{document.company_name} · FY {document.financial_year}{document.month ? ` · ${document.month}` : ""}</p>
           </div>
-          <span className={cn("w-fit rounded-md px-2 py-1 text-xs font-semibold capitalize", statusClass(isLocalSuccess ? "uploaded" : document.status))}>
-            {isLocalSuccess ? "received" : document.status.replace("_", " ")}
+          <span className={cn("w-fit rounded-md px-2 py-1 text-xs font-semibold capitalize", statusClass(document.status))}>
+            {document.status === "uploaded" ? "received" : document.status.replace("_", " ")}
           </span>
         </div>
         <div className="mt-3 flex flex-wrap gap-2">
@@ -268,12 +297,16 @@ function UploadModal({
   onChooseFile,
   onClose,
   onConfirm,
+  error,
+  isUploading,
   selectedFile
 }: {
   document: ClientPortalDocument;
   onChooseFile: (file: File | null) => void;
   onClose: () => void;
   onConfirm: () => void;
+  error: string | null;
+  isUploading: boolean;
   selectedFile: File | null;
 }) {
   function onDrop(event: DragEvent<HTMLLabelElement>) {
@@ -320,11 +353,12 @@ function UploadModal({
               Ready to upload: <strong className="text-primary">{selectedFile.name}</strong>
             </p>
           ) : null}
+          {error ? <p className="rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">{error}</p> : null}
 
           <div className="flex justify-end gap-2 border-t pt-4">
-            <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-            <Button type="button" disabled={!selectedFile} onClick={onConfirm}>
-              <CheckCircle2 size={16} /> Mark Uploaded
+            <Button type="button" variant="outline" disabled={isUploading} onClick={onClose}>Cancel</Button>
+            <Button type="button" disabled={!selectedFile || isUploading} onClick={onConfirm}>
+              <CheckCircle2 size={16} /> {isUploading ? "Uploading..." : "Upload File"}
             </Button>
           </div>
         </div>

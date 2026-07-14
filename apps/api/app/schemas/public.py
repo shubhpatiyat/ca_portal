@@ -40,8 +40,11 @@ class LeadCreate(BaseModel):
     hostname: str | None = None
     source_page_slug: str = "home"
     name: Annotated[str, StringConstraints(strip_whitespace=True, min_length=2, max_length=120)]
+    business_name: Annotated[str, StringConstraints(strip_whitespace=True, max_length=120)] | None = None
+    city: Annotated[str, StringConstraints(strip_whitespace=True, max_length=80)] | None = None
     phone: Annotated[str, StringConstraints(strip_whitespace=True, min_length=8, max_length=24)]
     email: EmailStr | None = None
+    inquiry_type: Annotated[str, StringConstraints(strip_whitespace=True, max_length=120)] | None = None
     service_interest: Annotated[str, StringConstraints(strip_whitespace=True, max_length=120)] | None = None
     message: Annotated[str, StringConstraints(strip_whitespace=True, max_length=1000)] | None = None
     website: str | None = Field(default=None, max_length=0)

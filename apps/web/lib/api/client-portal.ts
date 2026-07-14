@@ -52,6 +52,12 @@ export type ClientPortalDashboard = {
   documents: ClientPortalDocument[];
 };
 
+export type ClientDocumentUploadPayload = {
+  file_name: string;
+  file_size: number;
+  mime_type?: string;
+};
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   if (!apiBaseUrl) {
     throw new Error("Client portal API is not configured.");
@@ -88,6 +94,19 @@ export const clientPortalApi = {
       headers: {
         authorization: `Bearer ${token}`
       }
+    });
+  },
+  uploadDocument: (documentId: string, payload: ClientDocumentUploadPayload) => {
+    const token = clientPortalApi.token();
+    if (!token) {
+      throw new Error("Client login is required.");
+    }
+    return request<{ document: ClientPortalDocument }>(`/api/v1/client/documents/${documentId}/upload`, {
+      method: "POST",
+      headers: {
+        authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify(payload)
     });
   }
 };

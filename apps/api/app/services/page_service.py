@@ -458,8 +458,11 @@ class PageService:
             page_slug=page.slug,
             page_title=page.title,
             seo=SeoPayload(
-                title=f"{page.title} | {organization.name if organization else organization_slug}",
-                description=f"Tax, GST and compliance support from {organization.name if organization else organization_slug}.",
+                title=f"Outsourced Accounts Management for MSMEs | {organization.name if organization else organization_slug}",
+                description=(
+                    "Expert outsourced accounts management for growing businesses: accurate books, on-time payments, "
+                    "full transparency. No in-house overhead. Free consultation."
+                ),
                 canonical_url=canonical,
             ),
             contact=contact,
@@ -478,7 +481,7 @@ class PageService:
         payload = self._public_payload(home_page, home_revision, organization_slug, public_base_url)
         section_types_by_page = {
             "services": {"service_grid", "contact_form", "cta_banner"},
-            "about": {"founder_profile", "image_text", "contact_form"},
+            "about": {"image_text", "contact_form"},
             "contact": {"contact_form"},
         }
         title_by_page = {
@@ -495,7 +498,7 @@ class PageService:
                 "page_title": title,
                 "seo": SeoPayload(
                     title=f"{title} | {payload.firm_name}",
-                    description=f"{title} information for {payload.firm_name} in {payload.city}.",
+                    description=f"{title} information for outsourced accounts management at {payload.firm_name}.",
                     canonical_url=f"{base_url}/{page_slug}",
                 ),
                 "sections": [section for section in payload.sections if section.section_type in allowed_types],

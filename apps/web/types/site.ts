@@ -111,6 +111,7 @@ export type ContactFormSection = BaseSection<
     show_phone: boolean;
     show_email: boolean;
     show_map: boolean;
+    business_hours?: string | null;
   }
 >;
 
@@ -167,6 +168,9 @@ export type LeadPayload = {
   phone: string;
   email?: string;
   service_interest?: string;
+  business_name?: string;
+  city?: string;
+  inquiry_type?: string;
   message?: string;
   website?: string;
 };

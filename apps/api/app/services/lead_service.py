@@ -36,13 +36,20 @@ class LeadService:
         organization = self.db.execute(select(Organization).where(Organization.slug == payload.organization_slug)).scalar_one_or_none()
         if not organization:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Site not found.")
+        detail_lines = [
+            f"Business Name: {payload.business_name}" if payload.business_name else None,
+            f"City: {payload.city}" if payload.city else None,
+            f"Looking For: {payload.inquiry_type}" if payload.inquiry_type else None,
+            payload.message,
+        ]
+        message = "\n".join(line for line in detail_lines if line)
         lead = Lead(
             organization_id=organization.id,
             name=payload.name,
             phone=payload.phone,
             email=str(payload.email) if payload.email else None,
-            service_interest=payload.service_interest,
-            message=payload.message,
+            service_interest=payload.inquiry_type or payload.service_interest,
+            message=message or None,
             source_page_slug=payload.source_page_slug,
             status="new",
         )

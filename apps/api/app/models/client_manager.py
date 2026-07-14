@@ -74,7 +74,7 @@ class CompanyDocument(Base, TimestampMixin):
     visible_to_client: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     allow_client_upload: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     allow_client_download: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
-    storage_provider: Mapped[str] = mapped_column(String(40), default="onedrive", nullable=False)
+    storage_provider: Mapped[str] = mapped_column(String(40), default="app", nullable=False)
     storage_drive_id: Mapped[str | None] = mapped_column(String(180), nullable=True)
     storage_file_id: Mapped[str | None] = mapped_column(String(220), nullable=True)
     storage_folder_id: Mapped[str | None] = mapped_column(String(220), nullable=True)

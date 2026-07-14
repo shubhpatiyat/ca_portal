@@ -224,7 +224,7 @@ class CompanyDocumentCreate(BaseModel):
     visible_to_client: bool = False
     allow_client_upload: bool = True
     allow_client_download: bool = False
-    storage_provider: Literal["onedrive", "manual"] = "onedrive"
+    storage_provider: Literal["app", "onedrive", "manual"] = "app"
     storage_path: Annotated[str, StringConstraints(strip_whitespace=True, max_length=700)] | None = None
     web_url: Annotated[str, StringConstraints(strip_whitespace=True, max_length=900)] | None = None
 

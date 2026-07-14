@@ -38,8 +38,11 @@ export const onboardingSchema = z.object({
 
 export const leadFormSchema = z.object({
   name: z.string().min(2).max(120),
+  business_name: z.string().max(120).optional(),
+  city: z.string().max(80).optional(),
   phone: z.string().min(8).max(24),
   email: z.string().email().optional().or(z.literal("")),
+  inquiry_type: z.enum(["Free consultation", "General inquiry", "Join our team", "Other"]),
   service_interest: z.string().max(120).optional(),
   message: z.string().max(1000).optional(),
   website: z.string().max(0).optional()

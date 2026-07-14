@@ -127,7 +127,7 @@ export type CompanyDocumentPayload = {
   visible_to_client: boolean;
   allow_client_upload: boolean;
   allow_client_download: boolean;
-  storage_provider: "onedrive" | "manual";
+  storage_provider: "app" | "onedrive" | "manual";
   storage_path?: string;
   web_url?: string;
 };

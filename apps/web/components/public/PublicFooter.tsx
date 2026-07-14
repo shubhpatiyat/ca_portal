@@ -15,31 +15,38 @@ export function PublicFooter({ page }: { page: PublicSitePage }) {
               </span>
               <p className="font-serif text-2xl font-semibold text-[#e3e2e0]">{page.firm_name}</p>
             </div>
-            <p className="mt-2 text-sm italic opacity-80">The partners in your growth</p>
+            <p className="mt-2 text-sm italic opacity-80">Accurate books, no overhead.</p>
             <p className="mt-5 max-w-md text-sm leading-7 opacity-80">
-            Guided tax, GST, bookkeeping and compliance support for businesses in {page.city}.
+              Outsourced accounts management for growing businesses: accurate books, on-time payments, and full transparency.
             </p>
           </div>
           <div>
             <h2 className="text-sm font-semibold uppercase tracking-[0.16em] text-[#e3e2e0]">Quick Links</h2>
             <div className="mt-5 grid gap-3 text-sm opacity-80">
-              <a className="transition hover:text-white" href="/">Home</a>
-              <a className="transition hover:text-white" href="#security">Security</a>
-              <a className="transition hover:text-white" href="#contact">Contact</a>
+              <a className="transition hover:text-white" href="#about">About Us</a>
+              <a className="transition hover:text-white" href="#how-we-work">How It Works</a>
+              <a className="transition hover:text-white" href="#security">Data Security</a>
+              <a className="transition hover:text-white" href="#faq">FAQ</a>
+              <a className="transition hover:text-white" href="#contact">Contact Us</a>
+              <a className="transition hover:text-white" href="#contact">Careers</a>
             </div>
           </div>
           <div>
-            <h2 className="text-sm font-semibold uppercase tracking-[0.16em] text-[#e3e2e0]">Contact Info</h2>
+            <h2 className="text-sm font-semibold uppercase tracking-[0.16em] text-[#e3e2e0]">Get In Touch</h2>
             <div className="mt-5 grid gap-3 text-sm opacity-80">
               <p>{page.contact.email}</p>
               <p>{page.contact.phone}</p>
-              <p>{page.city}</p>
+              <p>{page.contact.address}</p>
             </div>
           </div>
         </div>
         <div className="mt-12 flex flex-col gap-4 border-t border-white/10 pt-8 text-xs opacity-70 md:flex-row md:items-center md:justify-between">
           <p>© {new Date().getFullYear()} {page.firm_name}. All rights reserved.</p>
-          <p>{page.contact.address}</p>
+          <div className="flex flex-wrap gap-4">
+            <a className="transition hover:text-white" href="#contact">Privacy Policy</a>
+            <a className="transition hover:text-white" href="#contact">Terms of Service</a>
+            <a className="transition hover:text-white" href="#security">NDA & Confidentiality Commitment</a>
+          </div>
         </div>
       </div>
     </footer>

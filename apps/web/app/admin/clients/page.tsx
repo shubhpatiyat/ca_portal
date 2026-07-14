@@ -133,7 +133,7 @@ export default function ClientsPage() {
           visible_to_client: formData.get("visible_to_client") === "on",
           allow_client_upload: formData.get("allow_client_upload") === "on",
           allow_client_download: formData.get("allow_client_download") === "on",
-          storage_provider: "onedrive",
+          storage_provider: "app",
           storage_path: optionalText(formData, "storage_path"),
           web_url: optionalText(formData, "web_url")
         }),

@@ -247,11 +247,11 @@ const suggestedSections: Array<{
       is_visible: true,
       variant: "image_left",
       content_json: {
-        eyebrow: "Data security",
-        heading: "Sensitive financial data is handled with controlled access.",
+        eyebrow: "Data security and confidentiality",
+        heading: "Your Financial Data, Handled with Care",
         body:
-          "Client documents, credentials, and financial records need careful handling. Use this section to explain your access controls, document process, review trails, and confidentiality practices.",
-        cta: { label: "Read security policy", href: "/security" }
+          "Financial documents and finalized reports are stored through controlled document workflows, with access controls, confidentiality practices, and written NDA commitments before client data is handled.",
+        cta: { label: "Ask about our safeguards", href: "#contact" }
       }
     })
   },
@@ -267,9 +267,9 @@ const suggestedSections: Array<{
       is_visible: true,
       variant: "solid",
       content_json: {
-        heading: "Ready to clean up your finance operations?",
-        description: "Start with a short consultation and leave with a clearer next step.",
-        primary_cta: { label: "Book a free call", href: "#contact" }
+        heading: "Your Books, Our Move",
+        description: "Start with a short consultation and see what a well-managed accounts process can feel like.",
+        primary_cta: { label: "Book a Free Consultation", href: "#contact" }
       }
     })
   }
