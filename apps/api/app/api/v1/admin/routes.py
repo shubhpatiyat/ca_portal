@@ -38,7 +38,7 @@ from app.services.domain_service import DomainService
 from app.services.client_portal_auth import hash_client_password
 from app.services.lead_service import LeadService
 from app.services.media_service import MediaService
-from app.services.page_service import PageService, build_platform_url
+from app.services.page_service import PageService, build_platform_url, build_whatsapp_url
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -356,6 +356,19 @@ def update_organization(
     if payload.theme_key is not None:
         config = db.execute(select(WebsiteConfig).where(WebsiteConfig.organization_id == tenant.organization_id)).scalar_one()
         config.theme_key = payload.theme_key
+    if any(
+        value is not None
+        for value in (payload.contact_phone, payload.contact_whatsapp, payload.contact_email, payload.contact_address)
+    ):
+        config = db.execute(select(WebsiteConfig).where(WebsiteConfig.organization_id == tenant.organization_id)).scalar_one()
+        if payload.contact_phone is not None:
+            config.contact_phone = payload.contact_phone
+        if payload.contact_whatsapp is not None:
+            config.contact_whatsapp = build_whatsapp_url(payload.contact_whatsapp)
+        if payload.contact_email is not None:
+            config.contact_email = str(payload.contact_email)
+        if payload.contact_address is not None:
+            config.contact_address = payload.contact_address
     db.commit()
     PageService(db)._notify_revalidation(settings, tenant.organization_id, ["home", "services", "about", "contact"])
     return organization_out(db, tenant, settings, organization)

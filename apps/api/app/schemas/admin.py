@@ -39,6 +39,10 @@ class OrganizationUpdate(BaseModel):
     name: Annotated[str, StringConstraints(strip_whitespace=True, min_length=2, max_length=160)] | None = None
     city: Annotated[str, StringConstraints(strip_whitespace=True, min_length=2, max_length=100)] | None = None
     theme_key: Literal["navy_gold", "emerald_cream", "charcoal_blue"] | None = None
+    contact_phone: Annotated[str, StringConstraints(strip_whitespace=True, min_length=8, max_length=24)] | None = None
+    contact_whatsapp: Annotated[str, StringConstraints(strip_whitespace=True, min_length=8, max_length=120)] | None = None
+    contact_email: EmailStr | None = None
+    contact_address: Annotated[str, StringConstraints(strip_whitespace=True, min_length=8, max_length=240)] | None = None
 
 
 class CustomDomainCreate(BaseModel):
