@@ -49,6 +49,7 @@ def seed() -> None:
                 is_primary=True,
                 is_verified=True,
                 verification_status="verified",
+                provisioning_status="ready",
             )
         )
 

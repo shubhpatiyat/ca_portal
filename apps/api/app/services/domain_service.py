@@ -10,6 +10,7 @@ from app.core.config import Settings
 from app.models import Domain
 from app.schemas.admin import CustomDomainCreate, CustomDomainOut, TenantContext
 from app.services.page_service import normalize_platform_domain
+from app.services.vercel_domain_service import VercelDomainError, VercelDomainService
 
 
 def normalize_custom_hostname(value: str) -> str:
@@ -38,6 +39,13 @@ def _domain_out(domain: Domain) -> CustomDomainOut:
         verification_record_name=domain.verification_record_name,
         verification_record_value=domain.verification_record_value,
         dns_target=domain.dns_target,
+        dns_record_type=domain.dns_record_type,
+        provisioning_status=domain.provisioning_status,
+        is_ready=domain.provisioning_status == "ready",
+        provider_verification_record_name=domain.provider_verification_record_name,
+        provider_verification_record_value=domain.provider_verification_record_value,
+        provider_error=domain.provider_error,
+        provider_checked_at=domain.provider_checked_at,
         verified_at=domain.verified_at,
         last_checked_at=domain.last_checked_at,
         created_at=domain.created_at,
@@ -79,6 +87,8 @@ class DomainService:
             verification_record_name=record_name,
             verification_record_value=record_value,
             dns_target=self.settings.custom_domain_cname_target,
+            dns_record_type="CNAME",
+            provisioning_status="pending_ownership",
         )
         self.db.add(domain)
         self.db.commit()
@@ -94,9 +104,14 @@ class DomainService:
             domain.is_verified = True
             domain.verification_status = "verified"
             domain.verified_at = now
+            domain.provisioning_status = "provisioning"
+            domain.provider_error = None
+            self._provision_with_vercel(domain, now)
         else:
             domain.is_verified = False
             domain.verification_status = "pending"
+            domain.provisioning_status = "pending_ownership"
+            domain.provider_error = None
 
         self.db.commit()
         self.db.refresh(domain)
@@ -104,8 +119,8 @@ class DomainService:
 
     def make_primary(self, tenant: TenantContext, domain_id: str) -> CustomDomainOut:
         domain = self._custom_domain_for_tenant(tenant, domain_id)
-        if not domain.is_verified:
-            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Verify this domain before making it primary.")
+        if domain.provisioning_status != "ready":
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="The domain must be live before making it primary.")
         self.db.execute(update(Domain).where(Domain.organization_id == tenant.organization_id).values(is_primary=False))
         domain.is_primary = True
         self.db.commit()
@@ -114,6 +129,15 @@ class DomainService:
 
     def delete_custom_domain(self, tenant: TenantContext, domain_id: str) -> None:
         domain = self._custom_domain_for_tenant(tenant, domain_id)
+        provider = VercelDomainService(self.settings)
+        if provider.is_configured and domain.provisioning_status != "pending_ownership":
+            try:
+                provider.remove(domain.hostname)
+            except VercelDomainError as exc:
+                raise HTTPException(
+                    status_code=status.HTTP_502_BAD_GATEWAY,
+                    detail=f"Could not remove the domain from Vercel: {exc}",
+                ) from exc
         self.db.delete(domain)
         self.db.commit()
 
@@ -123,11 +147,36 @@ class DomainService:
                 Domain.organization_id == organization_id,
                 Domain.is_primary.is_(True),
                 Domain.is_verified.is_(True),
+                Domain.provisioning_status == "ready",
             )
         ).scalar_one_or_none()
         if not domain:
             return None
         return f"https://{domain.hostname}"
+
+    def _provision_with_vercel(self, domain: Domain, checked_at: datetime) -> None:
+        provider = VercelDomainService(self.settings)
+        domain.provider_checked_at = checked_at
+        if not provider.is_configured:
+            domain.provisioning_status = "configuration_required"
+            domain.provider_error = "Add VERCEL_API_TOKEN and VERCEL_PROJECT_ID to the API deployment."
+            return
+
+        try:
+            provider_state = provider.provision(domain.hostname)
+        except VercelDomainError as exc:
+            domain.provisioning_status = "failed"
+            domain.provider_error = str(exc)
+            return
+
+        domain.provisioning_status = provider_state.status
+        domain.provider_error = None
+        domain.provider_verification_record_name = provider_state.verification_record_name
+        domain.provider_verification_record_value = provider_state.verification_record_value
+        if provider_state.dns_record_type:
+            domain.dns_record_type = provider_state.dns_record_type
+        if provider_state.dns_record_value:
+            domain.dns_target = provider_state.dns_record_value
 
     def _custom_domain_for_tenant(self, tenant: TenantContext, domain_id: str) -> Domain:
         domain = self.db.execute(

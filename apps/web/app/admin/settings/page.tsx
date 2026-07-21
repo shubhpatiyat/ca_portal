@@ -50,7 +50,7 @@ export default function SettingsPage() {
     runDomainAction(async () => {
       await adminApi.addDomain(nextHostname);
       setHostname("");
-    }, "Custom domain added. Add the DNS records below, then verify it.");
+    }, "Custom domain added. Add the DNS records below, then check its status.");
   }
 
   function copy(value?: string | null) {
@@ -133,7 +133,7 @@ export default function SettingsPage() {
               onCopy={copy}
               onDelete={() => runDomainAction(() => adminApi.deleteDomain(domain.id), "Custom domain removed.")}
               onMakePrimary={() => runDomainAction(() => adminApi.makeDomainPrimary(domain.id), "Primary domain updated.")}
-              onVerify={() => runDomainAction(() => adminApi.verifyDomain(domain.id), "Domain verification checked.")}
+              onVerify={() => runDomainAction(() => adminApi.verifyDomain(domain.id), "Domain status checked.")}
             />
           ))}
         </div>
@@ -166,7 +166,8 @@ function CustomDomainPanel({
   onMakePrimary: () => void;
   onVerify: () => void;
 }) {
-  const verified = domain.is_verified;
+  const ready = domain.is_ready;
+  const status = domainStatus(domain);
   return (
     <article className="rounded-md border bg-background p-4">
       <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
@@ -174,20 +175,19 @@ function CustomDomainPanel({
           <div className="flex flex-wrap items-center gap-2">
             <h3 className="break-all font-semibold text-primary">{domain.hostname}</h3>
             {domain.is_primary ? <span className="rounded-md bg-primary px-2 py-1 text-xs font-semibold text-primary-foreground">Primary</span> : null}
-            <span className={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-semibold ${verified ? "bg-accent/15 text-accent" : "bg-secondary/15 text-secondary"}`}>
-              {verified ? <CheckCircle2 size={13} /> : <AlertCircle size={13} />}
-              {verified ? "Verified" : "Pending DNS"}
+            <span className={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-semibold ${ready ? "bg-accent/15 text-accent" : "bg-secondary/15 text-secondary"}`}>
+              {ready ? <CheckCircle2 size={13} /> : <AlertCircle size={13} />}
+              {status.label}
             </span>
           </div>
-          <p className="mt-2 text-sm text-muted-foreground">
-            {verified ? "This domain can serve your public website." : "Add the TXT record below to prove ownership, then verify."}
-          </p>
+          <p className="mt-2 text-sm text-muted-foreground">{status.description}</p>
+          {domain.provider_error ? <p className="mt-2 text-sm text-destructive">{domain.provider_error}</p> : null}
         </div>
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" type="button" onClick={onVerify} disabled={disabled}>
-            <RefreshCw size={15} /> Verify
+            <RefreshCw size={15} /> Check status
           </Button>
-          <Button variant="outline" type="button" onClick={onMakePrimary} disabled={disabled || !verified || domain.is_primary}>
+          <Button variant="outline" type="button" onClick={onMakePrimary} disabled={disabled || !ready || domain.is_primary}>
             <Star size={15} /> Make primary
           </Button>
           <button className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md border px-3 py-2 text-sm font-semibold text-destructive" type="button" onClick={onDelete} disabled={disabled}>
@@ -196,18 +196,49 @@ function CustomDomainPanel({
         </div>
       </div>
 
-      {!verified ? (
+      {!domain.is_verified ? (
         <div className="mt-5 grid gap-3 md:grid-cols-2">
-          <DnsRecord label="TXT name" value={domain.verification_record_name} onCopy={onCopy} />
-          <DnsRecord label="TXT value" value={domain.verification_record_value} onCopy={onCopy} />
-          <DnsRecord label="Website CNAME target" value={domain.dns_target} onCopy={onCopy} />
+          <DnsRecord label="Ownership TXT name" value={domain.verification_record_name} onCopy={onCopy} />
+          <DnsRecord label="Ownership TXT value" value={domain.verification_record_value} onCopy={onCopy} />
         </div>
       ) : null}
-      {domain.last_checked_at ? (
-        <p className="mt-4 text-xs text-muted-foreground">Last checked {new Date(domain.last_checked_at).toLocaleString()}</p>
+      {domain.provider_verification_record_name && !ready ? (
+        <div className="mt-5 grid gap-3 md:grid-cols-2">
+          <DnsRecord label="Vercel TXT name" value={domain.provider_verification_record_name} onCopy={onCopy} />
+          <DnsRecord label="Vercel TXT value" value={domain.provider_verification_record_value} onCopy={onCopy} />
+        </div>
+      ) : null}
+      {!ready && domain.dns_target ? (
+        <div className="mt-3 grid gap-3 md:grid-cols-2">
+          <DnsRecord label={`Website ${domain.dns_record_type ?? "CNAME"} target`} value={domain.dns_target} onCopy={onCopy} />
+        </div>
+      ) : null}
+      {domain.provider_checked_at || domain.last_checked_at ? (
+        <p className="mt-4 text-xs text-muted-foreground">
+          Last checked {new Date(domain.provider_checked_at ?? domain.last_checked_at ?? "").toLocaleString()}
+        </p>
       ) : null}
     </article>
   );
+}
+
+function domainStatus(domain: CustomDomain): { label: string; description: string } {
+  switch (domain.provisioning_status) {
+    case "ready":
+      return { label: "Live", description: "The domain is attached to Vercel and ready to serve the website and client portal." };
+    case "provisioning":
+      return { label: "Provisioning", description: "Ownership is verified. The domain is being attached to the website deployment." };
+    case "pending_provider_verification":
+      return { label: "Verification needed", description: "Add the Vercel TXT record shown below, then check the status again." };
+    case "pending_dns":
+      return { label: "Pending website DNS", description: "Point the website DNS record to the target below, then check the status again." };
+    case "configuration_required":
+      return { label: "Platform setup needed", description: "The platform owner must finish the Vercel API configuration." };
+    case "failed":
+      return { label: "Needs attention", description: "Vercel could not finish provisioning. Review the message below and retry." };
+    default:
+      return { label: "Pending ownership", description: "Add the ownership TXT record below, then check the status." };
+  }
 }
 
 function DnsRecord({ label, value, onCopy }: { label: string; value?: string | null; onCopy: (value?: string | null) => void }) {

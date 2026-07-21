@@ -142,6 +142,20 @@ export type CustomDomain = {
   verification_record_name?: string | null;
   verification_record_value?: string | null;
   dns_target?: string | null;
+  dns_record_type?: "A" | "CNAME" | null;
+  provisioning_status:
+    | "pending_ownership"
+    | "provisioning"
+    | "pending_provider_verification"
+    | "pending_dns"
+    | "ready"
+    | "configuration_required"
+    | "failed";
+  is_ready: boolean;
+  provider_verification_record_name?: string | null;
+  provider_verification_record_value?: string | null;
+  provider_error?: string | null;
+  provider_checked_at?: string | null;
   verified_at?: string | null;
   last_checked_at?: string | null;
   created_at: string;
@@ -160,7 +174,7 @@ export type OnboardingPayload = {
   themeKey: ThemeKey;
 };
 
-const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL;
+const apiBaseUrl = "/backend";
 
 export class AdminApiError extends Error {
   constructor(
@@ -173,10 +187,6 @@ export class AdminApiError extends Error {
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  if (!apiBaseUrl) {
-    throw new Error("NEXT_PUBLIC_API_URL is required for the admin workspace.");
-  }
-
   const token = await getSupabaseAccessToken();
   if (!token) {
     throw new Error("Sign in before using the admin workspace.");

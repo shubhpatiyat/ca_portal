@@ -95,11 +95,12 @@ export function getPublicPageByHost(host: string, pageSlug: string): Promise<Pub
 }
 
 export async function submitLead(payload: LeadPayload): Promise<{ id: string; status: string }> {
-  if (!apiBaseUrl) {
+  const leadApiBaseUrl = typeof window === "undefined" ? apiBaseUrl : "/backend";
+  if (!leadApiBaseUrl) {
     return { id: crypto.randomUUID(), status: "new" };
   }
 
-  return fetchJson<{ id: string; status: string }>(`${apiBaseUrl}/api/v1/public/leads`, {
+  return fetchJson<{ id: string; status: string }>(`${leadApiBaseUrl}/api/v1/public/leads`, {
     method: "POST",
     body: JSON.stringify(payload)
   });

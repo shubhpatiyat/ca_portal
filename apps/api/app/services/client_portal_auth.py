@@ -84,7 +84,11 @@ def organization_for_host(db: Session, hostname: str) -> Organization:
     organization = db.execute(
         select(Organization)
         .join(Domain, Domain.organization_id == Organization.id)
-        .where(Domain.hostname == normalized, Domain.is_verified.is_(True))
+        .where(
+            Domain.hostname == normalized,
+            Domain.is_verified.is_(True),
+            Domain.provisioning_status == "ready",
+        )
     ).scalar_one_or_none()
     if not organization:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Firm portal not found for this domain.")

@@ -234,6 +234,7 @@ class PageService:
             domain.domain_type = "platform"
             domain.is_verified = True
             domain.verification_status = "verified"
+            domain.provisioning_status = "ready"
             if not domain.is_primary:
                 domain.is_primary = True
             return domain
@@ -244,6 +245,7 @@ class PageService:
             is_primary=True,
             is_verified=True,
             verification_status="verified",
+            provisioning_status="ready",
         )
         self.db.add(domain)
         return domain
@@ -340,7 +342,13 @@ class PageService:
 
     def public_by_host(self, hostname: str, page_slug: str, settings: Settings, scheme: str = "https") -> PublicSitePage:
         normalized_hostname = normalize_hostname(hostname)
-        domain = self.db.execute(select(Domain).where(Domain.hostname == normalized_hostname, Domain.is_verified.is_(True))).scalar_one_or_none()
+        domain = self.db.execute(
+            select(Domain).where(
+                Domain.hostname == normalized_hostname,
+                Domain.is_verified.is_(True),
+                Domain.provisioning_status == "ready",
+            )
+        ).scalar_one_or_none()
         organization_id = domain.organization_id if domain else self._organization_id_by_default_hostname(normalized_hostname, settings)
         if not organization_id:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Host is not mapped to a site.")

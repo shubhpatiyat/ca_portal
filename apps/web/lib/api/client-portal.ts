@@ -1,4 +1,4 @@
-const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL;
+const apiBaseUrl = "/backend";
 const tokenKey = "ca-client-portal-token";
 
 export type ClientPortalUser = {
@@ -59,9 +59,6 @@ export type ClientDocumentUploadPayload = {
 };
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  if (!apiBaseUrl) {
-    throw new Error("Client portal API is not configured.");
-  }
   const response = await fetch(`${apiBaseUrl}${path}`, {
     ...init,
     headers: {

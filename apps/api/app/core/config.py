@@ -22,6 +22,9 @@ class Settings(BaseSettings):
     platform_scheme: str = "http"
     custom_domain_cname_target: str = "cname.vercel-dns.com"
     custom_domain_txt_prefix: str = "_ca-site"
+    vercel_api_token: str | None = None
+    vercel_project_id: str | None = None
+    vercel_team_id: str | None = None
     client_portal_jwt_secret: str = "dev-client-portal-secret-change-me"
     log_level: str = "INFO"
 

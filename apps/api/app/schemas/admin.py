@@ -55,6 +55,21 @@ class CustomDomainOut(BaseModel):
     verification_record_name: str | None = None
     verification_record_value: str | None = None
     dns_target: str | None = None
+    dns_record_type: Literal["A", "CNAME"] | None = None
+    provisioning_status: Literal[
+        "pending_ownership",
+        "provisioning",
+        "pending_provider_verification",
+        "pending_dns",
+        "ready",
+        "configuration_required",
+        "failed",
+    ]
+    is_ready: bool
+    provider_verification_record_name: str | None = None
+    provider_verification_record_value: str | None = None
+    provider_error: str | None = None
+    provider_checked_at: datetime | None = None
     verified_at: datetime | None = None
     last_checked_at: datetime | None = None
     created_at: datetime
