@@ -296,23 +296,107 @@ function renumberSections(sections: PageSection[]): PageSection[] {
 }
 
 export function ContactDetailsFromApi() {
+  const queryClient = useQueryClient();
   const pageQuery = useQuery({ queryKey: ["admin-page", "home"], queryFn: adminApi.homePage, retry: false });
+  const [phone, setPhone] = useState("");
+  const [whatsapp, setWhatsapp] = useState("");
+  const [email, setEmail] = useState("");
+  const [address, setAddress] = useState("");
+  const [message, setMessage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
+
+  useEffect(() => {
+    if (!pageQuery.data) {
+      return;
+    }
+    setPhone(pageQuery.data.contact.phone);
+    setWhatsapp(pageQuery.data.contact.whatsapp);
+    setEmail(pageQuery.data.contact.email);
+    setAddress(pageQuery.data.contact.address);
+  }, [pageQuery.data]);
+
+  const canSave = phone.trim().length >= 8 && whatsapp.trim().length >= 8 && email.trim().includes("@") && address.trim().length >= 8;
+
+  function saveContactDetails() {
+    if (!canSave) {
+      setError("Fill phone, WhatsApp, email and office address before saving.");
+      return;
+    }
+    setMessage(null);
+    setError(null);
+    startTransition(async () => {
+      try {
+        await adminApi.updateOrganization({
+          contact_phone: phone,
+          contact_whatsapp: whatsapp,
+          contact_email: email,
+          contact_address: address
+        });
+        await queryClient.invalidateQueries({ queryKey: ["admin-page", "home"] });
+        await queryClient.invalidateQueries({ queryKey: ["admin-me"] });
+        setMessage("Contact details saved.");
+      } catch (caught) {
+        setError(caught instanceof Error ? caught.message : "Could not save contact details.");
+      }
+    });
+  }
 
   return (
-    <div className="rounded-lg border bg-card p-6">
-      <h1 className="font-serif text-3xl font-bold text-primary">Contact Details</h1>
+    <div className="grid gap-6">
+      <div>
+        <h1 className="font-serif text-3xl font-bold text-primary">Contact Details</h1>
+        <p className="mt-2 text-muted-foreground">Update the phone, WhatsApp, email and office address shown on the public website.</p>
+      </div>
       {pageQuery.isLoading ? <p className="mt-3 text-muted-foreground">Loading contact details...</p> : null}
       {pageQuery.isError ? <p className="mt-3 text-destructive">Could not load contact details. Please refresh and try again.</p> : null}
-      <dl className="mt-6 grid gap-4 md:grid-cols-2">
-        {pageQuery.data
-          ? Object.entries(pageQuery.data.contact).map(([label, value]) => (
-              <div className="rounded-md border bg-background p-4" key={label}>
-                <dt className="text-sm font-semibold capitalize text-muted-foreground">{label.replace("_", " ")}</dt>
-                <dd className="mt-2 text-primary">{value}</dd>
-              </div>
-            ))
-          : null}
-      </dl>
+      <div className="rounded-lg border bg-card p-5">
+        <div className="grid gap-4 md:grid-cols-2">
+          <ContactField label="Phone" value={phone} onChange={setPhone} placeholder="+91 90000 12345" />
+          <ContactField label="WhatsApp" value={whatsapp} onChange={setWhatsapp} placeholder="+91 90000 12345" />
+          <ContactField label="Email" value={email} onChange={setEmail} placeholder="office@example.in" type="email" />
+          <ContactField label="Office address" value={address} onChange={setAddress} placeholder="Your office address" />
+        </div>
+        <div className="mt-6 flex justify-end">
+          <button
+            className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-60"
+            disabled={isPending || !canSave}
+            onClick={saveContactDetails}
+            type="button"
+          >
+            {isPending ? "Saving..." : "Save Contact Details"}
+          </button>
+        </div>
+        {message ? <p className="mt-4 text-sm font-medium text-accent">{message}</p> : null}
+        {error ? <p className="mt-4 text-sm font-medium text-destructive">{error}</p> : null}
+      </div>
     </div>
+  );
+}
+
+function ContactField({
+  label,
+  value,
+  onChange,
+  placeholder,
+  type = "text"
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder: string;
+  type?: string;
+}) {
+  return (
+    <label className="grid gap-2 text-sm font-medium">
+      {label}
+      <input
+        className="min-h-11 rounded-md border bg-background px-3"
+        onChange={(event) => onChange(event.target.value)}
+        placeholder={placeholder}
+        type={type}
+        value={value}
+      />
+    </label>
   );
 }

@@ -230,7 +230,15 @@ export const adminApi = {
       method: "POST",
       body: JSON.stringify(payload)
     }),
-  updateOrganization: (payload: { name?: string; city?: string; theme_key?: ThemeKey }) =>
+  updateOrganization: (payload: {
+    name?: string;
+    city?: string;
+    theme_key?: ThemeKey;
+    contact_phone?: string;
+    contact_whatsapp?: string;
+    contact_email?: string;
+    contact_address?: string;
+  }) =>
     request<AdminOrganization>("/api/v1/admin/organization", {
       method: "PATCH",
       body: JSON.stringify(payload)

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Send } from "lucide-react";
 import type {
   ContactFormSection,
   CtaBannerSection,
@@ -79,6 +80,66 @@ const sectionTips: Record<PageSection["section_type"], { goal: string; checks: s
   }
 };
 
+function hasText(value: string | null | undefined): boolean {
+  return Boolean(value?.trim());
+}
+
+function ctaHasText(cta: { label: string; href: string } | null | undefined): boolean {
+  return Boolean(cta && hasText(cta.label) && hasText(cta.href));
+}
+
+function sectionHasRequiredText(section: PageSection): boolean {
+  if (section.section_type === "hero") {
+    const content = section.content_json;
+    return hasText(content.eyebrow) && hasText(content.title) && hasText(content.description) && ctaHasText(content.primary_cta);
+  }
+  if (section.section_type === "trust_stats") {
+    const content = section.content_json;
+    return hasText(content.heading) && content.stats.length > 0 && content.stats.every((stat) => hasText(stat.value) && hasText(stat.label));
+  }
+  if (section.section_type === "service_grid") {
+    const content = section.content_json;
+    return (
+      hasText(content.heading) &&
+      content.services.length > 0 &&
+      content.services.every((service) => hasText(service.title) && hasText(service.description))
+    );
+  }
+  if (section.section_type === "image_text") {
+    const content = section.content_json;
+    return hasText(content.heading) && hasText(content.body);
+  }
+  if (section.section_type === "founder_profile") {
+    const content = section.content_json;
+    return hasText(content.founder_name) && hasText(content.designation) && hasText(content.bio);
+  }
+  if (section.section_type === "testimonials") {
+    const content = section.content_json;
+    return (
+      hasText(content.heading) &&
+      content.testimonials.length > 0 &&
+      content.testimonials.every((testimonial) => hasText(testimonial.name) && hasText(testimonial.role) && hasText(testimonial.quote))
+    );
+  }
+  if (section.section_type === "faq") {
+    const content = section.content_json;
+    return hasText(content.heading) && content.items.length > 0 && content.items.every((item) => hasText(item.question) && hasText(item.answer));
+  }
+  if (section.section_type === "cta_banner") {
+    const content = section.content_json;
+    return hasText(content.heading) && hasText(content.description) && ctaHasText(content.primary_cta);
+  }
+  if (section.section_type === "contact_form") {
+    const content = section.content_json;
+    return hasText(content.heading) && hasText(content.description);
+  }
+  if (section.section_type === "rich_text") {
+    const content = section.content_json;
+    return hasText(content.heading) && hasText(content.markdown);
+  }
+  return true;
+}
+
 export function SectionEditor({ sectionId }: { sectionId: string }) {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -103,16 +164,17 @@ export function SectionEditor({ sectionId }: { sectionId: string }) {
     setSections((current) => current.map((item) => (item.id === nextSection.id ? nextSection : item)));
   }
 
-  function save() {
+  function publishSection() {
     setError(null);
     startTransition(async () => {
       try {
         const nextSections = sections.map((item) => (item.id === section?.id ? section : item));
         await adminApi.updateDraft(nextSections);
+        await adminApi.publish();
         await queryClient.invalidateQueries({ queryKey: ["admin-page", "home"] });
         router.push("/admin/website");
       } catch (caught) {
-        setError(caught instanceof Error ? caught.message : "Could not save this section.");
+        setError(caught instanceof Error ? caught.message : "Could not publish this section.");
       }
     });
   }
@@ -131,6 +193,7 @@ export function SectionEditor({ sectionId }: { sectionId: string }) {
   }
 
   const tips = sectionTips[section.section_type];
+  const canPersist = sectionHasRequiredText(section);
 
   return (
     <div className="grid gap-6 xl:grid-cols-[1fr_320px]">
@@ -148,13 +211,18 @@ export function SectionEditor({ sectionId }: { sectionId: string }) {
         </div>
 
         {error ? <p className="mt-6 rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">{error}</p> : null}
+        {!canPersist ? (
+          <p className="mt-6 rounded-md border border-secondary/30 bg-secondary/10 p-3 text-sm font-medium text-primary">
+            Fill the required text fields before saving or publishing.
+          </p>
+        ) : null}
 
-        <div className="mt-6 flex justify-end gap-3">
+        <div className="mt-6 flex flex-col justify-end gap-3 sm:flex-row">
           <Button type="button" variant="outline" onClick={() => router.push("/admin/website")}>
             Cancel
           </Button>
-          <Button type="button" disabled={isPending} onClick={save}>
-            {isPending ? "Saving..." : "Save draft"}
+          <Button type="button" disabled={isPending || !canPersist} onClick={publishSection}>
+            <Send size={16} /> {isPending ? "Publishing..." : "Publish Changes"}
           </Button>
         </div>
       </div>

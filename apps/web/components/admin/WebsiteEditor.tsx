@@ -2,18 +2,19 @@
 
 import { useEffect, useMemo, useState, useTransition } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   AlertCircle,
-  ArrowDown,
-  ArrowUp,
   CheckCircle2,
+  CircleHelp,
   ExternalLink,
   Eye,
   GripVertical,
   Lightbulb,
+  MessageSquareQuote,
+  MoreHorizontal,
   PencilLine,
   Plus,
-  Save,
   Send,
   Sparkles,
   Trash2
@@ -170,12 +171,14 @@ function buildReadiness(sections: PageSection[]) {
   };
 }
 
-const suggestedSections: Array<{
+type SuggestedSection = {
   key: string;
   title: string;
   description: string;
   section: () => PageSection;
-}> = [
+};
+
+const suggestedSections: SuggestedSection[] = [
   {
     key: "trust",
     title: "Trust proof",
@@ -283,9 +286,9 @@ function serviceText(sections: PageSection[]): string {
   return serviceSection.content_json.services.map((service) => service.title).join(" ").toLowerCase();
 }
 
-function contextualSuggestions(sections: PageSection[]): typeof suggestedSections {
+function contextualSuggestions(sections: PageSection[]): SuggestedSection[] {
   const services = serviceText(sections);
-  const suggestions: typeof suggestedSections = [];
+  const suggestions: SuggestedSection[] = [];
 
   if (/registration|startup|incorporation|company|llp|opc/.test(services)) {
     suggestions.push({
@@ -322,7 +325,7 @@ function contextualSuggestions(sections: PageSection[]): typeof suggestedSection
         variant: "image_right",
         content_json: {
           eyebrow: "Tax notices",
-          heading: "Received a notice or missed a filing deadline?",
+          heading: "Tax Notice Support Without the Panic",
           body: "We review the notice, explain the risk in plain language, collect supporting documents and prepare the response or filing plan.",
           cta: { label: "Get help", href: "#contact" }
         }
@@ -353,7 +356,46 @@ function contextualSuggestions(sections: PageSection[]): typeof suggestedSection
   return suggestions;
 }
 
+function sectionText(section: PageSection): string {
+  if (section.section_type === "image_text") {
+    return `${section.content_json.eyebrow ?? ""} ${section.content_json.heading} ${section.content_json.body}`.toLowerCase();
+  }
+  if (section.section_type === "rich_text") {
+    return `${section.content_json.heading} ${section.content_json.markdown}`.toLowerCase();
+  }
+  return "";
+}
+
+function isSuggestionPresent(sections: PageSection[], suggestionKey: string): boolean {
+  if (suggestionKey === "startup-process") {
+    return sections.some((section) => section.section_type === "rich_text" && /registration|incorporation/i.test(sectionText(section)));
+  }
+  if (suggestionKey === "tax-notice") {
+    return sections.some((section) => section.section_type === "image_text" && /notice/i.test(sectionText(section)));
+  }
+  if (suggestionKey === "office-location") {
+    return sections.some((section) => section.section_type === "image_text" && /office|location|visit/i.test(sectionText(section)));
+  }
+  if (suggestionKey === "trust") {
+    return sections.some((section) => section.section_type === "trust_stats");
+  }
+  if (suggestionKey === "pain") {
+    return sections.some((section) => section.section_type === "image_text" && /concern|slipping|deadline|cash flow|messy|pain|problem|growth/i.test(sectionText(section)));
+  }
+  if (suggestionKey === "process") {
+    return sections.some((section) => section.section_type === "rich_text");
+  }
+  if (suggestionKey === "security") {
+    return sections.some((section) => section.section_type === "image_text" && /security|secure|confidential|data|document/i.test(sectionText(section)));
+  }
+  if (suggestionKey === "final-cta") {
+    return sections.some((section) => section.section_type === "cta_banner");
+  }
+  return false;
+}
+
 export function WebsiteEditor() {
+  const router = useRouter();
   const queryClient = useQueryClient();
   const pageQuery = useQuery({ queryKey: ["admin-page", "home"], queryFn: adminApi.homePage, retry: false });
   const meQuery = useQuery({ queryKey: ["admin-me"], queryFn: adminApi.me, retry: false });
@@ -364,6 +406,7 @@ export function WebsiteEditor() {
   const [showPublishSuccess, setShowPublishSuccess] = useState(false);
   const [showRecommendedConfirm, setShowRecommendedConfirm] = useState(false);
   const [sectionPendingRemovalId, setSectionPendingRemovalId] = useState<string | null>(null);
+  const [draggingSectionId, setDraggingSectionId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const sortedSections = useMemo(() => [...sections].sort((a, b) => a.position - b.position), [sections]);
@@ -378,37 +421,11 @@ export function WebsiteEditor() {
   const missingRecommended = recommendedTypes.filter((type) => !hasVisibleType(websiteSections, type));
   const visibleCount = websiteSections.filter((section) => section.is_visible).length;
   const allSuggestions = useMemo(() => [...contextualSuggestions(websiteSections), ...suggestedSections], [websiteSections]);
-  const suggestedToShow = allSuggestions.filter((suggestion) => {
-    if (suggestion.key === "startup-process") {
-      return !websiteSections.some((section) => section.section_type === "rich_text" && /registration|incorporation/i.test(section.content_json.heading));
-    }
-    if (suggestion.key === "tax-notice") {
-      return !websiteSections.some((section) => section.section_type === "image_text" && /notice/i.test(`${section.content_json.heading} ${section.content_json.body}`));
-    }
-    if (suggestion.key === "office-location") {
-      return !websiteSections.some((section) => section.section_type === "image_text" && /office|location|visit/i.test(`${section.content_json.heading} ${section.content_json.body}`));
-    }
-    if (suggestion.key === "trust") {
-      return !hasVisibleType(websiteSections, "trust_stats");
-    }
-    if (suggestion.key === "process") {
-      return !hasVisibleType(websiteSections, "rich_text");
-    }
-    if (suggestion.key === "final-cta") {
-      return !hasVisibleType(websiteSections, "cta_banner");
-    }
-    if (suggestion.key === "security") {
-      return !websiteSections.some(
-        (section) =>
-          section.section_type === "image_text" &&
-          /security|secure|confidential|data|document/i.test(`${section.content_json.heading} ${section.content_json.body}`)
-      );
-    }
-    return true;
-  });
+  const suggestedToShow = allSuggestions.filter((suggestion) => !isSuggestionPresent(websiteSections, suggestion.key));
   const recommendedAdditions = suggestedToShow.filter((suggestion) =>
     ["trust", "pain", "process", "security", "final-cta"].includes(suggestion.key)
   );
+  const showSuggestedStructureAction = recommendedAdditions.length > 0;
 
   useEffect(() => {
     if (pageQuery.data && !dirty) {
@@ -429,13 +446,15 @@ export function WebsiteEditor() {
     setShowPublishSuccess(false);
   }
 
-  function move(index: number, direction: -1 | 1) {
+  function reorderSection(draggedSectionId: string, targetSectionId: string) {
     const next = [...websiteSections];
-    const target = index + direction;
-    if (target < 0 || target >= next.length) {
+    const fromIndex = next.findIndex((section) => section.id === draggedSectionId);
+    const toIndex = next.findIndex((section) => section.id === targetSectionId);
+    if (fromIndex < 0 || toIndex < 0 || fromIndex === toIndex) {
       return;
     }
-    [next[index], next[target]] = [next[target], next[index]];
+    const [moved] = next.splice(fromIndex, 1);
+    next.splice(toIndex, 0, moved);
     updateSections([...next, ...dedicatedSections]);
   }
 
@@ -459,30 +478,23 @@ export function WebsiteEditor() {
     setSectionPendingRemovalId(null);
   }
 
-  function addSuggestedSection(createSection: () => PageSection) {
-    updateSections([...websiteSections, createSection(), ...dedicatedSections]);
+  function addSuggestedSection(suggestion: SuggestedSection) {
+    if (isSuggestionPresent(websiteSections, suggestion.key)) {
+      return;
+    }
+    updateSections([...websiteSections, suggestion.section(), ...dedicatedSections]);
   }
 
   function applyRecommendedLayout() {
     const nextSections = [...websiteSections];
     for (const suggestion of recommendedAdditions) {
+      if (isSuggestionPresent(nextSections, suggestion.key)) {
+        continue;
+      }
       nextSections.push(suggestion.section());
     }
     updateSections([...nextSections, ...dedicatedSections]);
     setShowRecommendedConfirm(false);
-  }
-
-  function saveDraft() {
-    setActionError(null);
-    startTransition(async () => {
-      try {
-        await adminApi.updateDraft(sortedSections);
-        await queryClient.invalidateQueries({ queryKey: ["admin-page", "home"] });
-        setDirty(false);
-      } catch (caught) {
-        setActionError(caught instanceof Error ? caught.message : "Could not save draft.");
-      }
-    });
   }
 
   function publish() {
@@ -560,30 +572,35 @@ export function WebsiteEditor() {
             </p>
             <h1 className="font-serif text-3xl font-bold text-primary">Your website</h1>
             <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-              Your page starts with the essentials. Add proof, explain your process, and publish when the page feels ready.
+              Publish Changes saves your latest edits and makes them live.
             </p>
             <p className="mt-2 text-sm text-muted-foreground">Last published {publishedAt || "not published yet"}</p>
-            {dirty ? <p className="mt-2 text-sm font-semibold text-secondary">Draft changes not yet published.</p> : null}
+            {dirty ? <p className="mt-2 text-sm font-semibold text-secondary">You have private edits. Publish Changes will save and publish them.</p> : null}
             {actionError ? <p className="mt-2 max-w-2xl text-sm font-medium text-destructive">{actionError}</p> : null}
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button variant="outline" type="button" onClick={() => setShowRecommendedConfirm(true)}>
-              <Sparkles size={16} /> Apply Suggested Structure
-            </Button>
-            <Button variant="outline" type="button" onClick={saveDraft} disabled={isPending}>
-              <Save size={16} /> Save Draft
-            </Button>
+            {showSuggestedStructureAction ? (
+              <Button variant="outline" type="button" onClick={() => setShowRecommendedConfirm(true)}>
+                <Sparkles size={16} /> Apply Suggested Structure
+              </Button>
+            ) : null}
             <Link className="inline-flex min-h-10 items-center gap-2 rounded-md border px-4 py-2 text-sm font-semibold" href="/admin/website/preview">
               <Eye size={16} /> View Website
             </Link>
+            <Link className="inline-flex min-h-10 items-center gap-2 rounded-md border px-4 py-2 text-sm font-semibold" href="/admin/reviews">
+              <MessageSquareQuote size={16} /> Client Reviews
+            </Link>
+            <Link className="inline-flex min-h-10 items-center gap-2 rounded-md border px-4 py-2 text-sm font-semibold" href="/admin/faqs">
+              <CircleHelp size={16} /> FAQs
+            </Link>
             <Button type="button" onClick={publish} disabled={isPending}>
-              <Send size={16} /> Publish Changes
+              <Send size={16} /> {dirty ? "Save & Publish" : "Publish Changes"}
             </Button>
           </div>
         </div>
       </div>
 
-      {showRecommendedConfirm ? (
+      {showRecommendedConfirm && showSuggestedStructureAction ? (
         <div className="rounded-lg border border-secondary/30 bg-secondary/10 p-5">
           <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
             <div>
@@ -592,26 +609,19 @@ export function WebsiteEditor() {
                 This keeps your existing content and only adds missing recommended sections.
               </p>
               <div className="mt-4 grid gap-2 text-sm">
-                {recommendedAdditions.length ? (
-                  recommendedAdditions.map((suggestion) => (
-                    <div className="flex gap-2" key={suggestion.key}>
-                      <CheckCircle2 className="mt-0.5 text-accent" size={16} aria-hidden="true" />
-                      <span>Add {suggestion.title}</span>
-                    </div>
-                  ))
-                ) : (
-                  <div className="flex gap-2">
+                {recommendedAdditions.map((suggestion) => (
+                  <div className="flex gap-2" key={suggestion.key}>
                     <CheckCircle2 className="mt-0.5 text-accent" size={16} aria-hidden="true" />
-                    <span>Your recommended structure is already present.</span>
+                    <span>Add {suggestion.title}</span>
                   </div>
-                )}
+                ))}
               </div>
             </div>
             <div className="flex gap-2">
               <Button variant="outline" type="button" onClick={() => setShowRecommendedConfirm(false)}>
                 Cancel
               </Button>
-              <Button type="button" onClick={applyRecommendedLayout} disabled={!recommendedAdditions.length}>
+              <Button type="button" onClick={applyRecommendedLayout}>
                 Add Sections
               </Button>
             </div>
@@ -727,48 +737,44 @@ export function WebsiteEditor() {
         </aside>
 
         <div className="grid gap-6">
-          <section className="rounded-lg border bg-card p-5">
-            <div className="flex items-start gap-3">
-              <Lightbulb className="mt-1 text-secondary" size={20} aria-hidden="true" />
-              <div>
-                <h2 className="font-semibold text-primary">Suggested next sections</h2>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Recommendations change based on your services and missing trust boosters.
-                </p>
+          {suggestedToShow.length ? (
+            <section className="rounded-lg border bg-card p-5">
+              <div className="flex items-start gap-3">
+                <Lightbulb className="mt-1 text-secondary" size={20} aria-hidden="true" />
+                <div>
+                  <h2 className="font-semibold text-primary">Suggested next sections</h2>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Recommendations change based on your services and missing trust boosters.
+                  </p>
+                </div>
               </div>
-            </div>
-            <div className="mt-5 grid gap-3 md:grid-cols-2 2xl:grid-cols-3">
-              {suggestedToShow.slice(0, 6).map((suggestion) => (
-                <div className="rounded-md border bg-background p-4" key={suggestion.key}>
-                  <h3 className="font-semibold text-primary">{suggestion.title}</h3>
-                  <p className="mt-2 min-h-10 text-sm leading-6 text-muted-foreground">{suggestion.description}</p>
-                  <button
-                    className="mt-4 inline-flex min-h-9 items-center gap-2 rounded-md border px-3 py-2 text-sm font-semibold"
-                    type="button"
-                    onClick={() => addSuggestedSection(suggestion.section)}
-                  >
-                    <Plus size={15} /> Add
-                  </button>
-                </div>
-              ))}
-              {!suggestedToShow.length ? (
-                <div className="rounded-md border bg-background p-4 text-sm text-muted-foreground">
-                  Your recommended section set is already present.
-                </div>
-              ) : null}
-            </div>
-          </section>
+              <div className="mt-5 grid gap-3 md:grid-cols-2 2xl:grid-cols-3">
+                {suggestedToShow.slice(0, 6).map((suggestion) => (
+                  <div className="rounded-md border bg-background p-4" key={suggestion.key}>
+                    <h3 className="font-semibold text-primary">{suggestion.title}</h3>
+                    <p className="mt-2 min-h-10 text-sm leading-6 text-muted-foreground">{suggestion.description}</p>
+                    <button
+                      className="mt-4 inline-flex min-h-9 items-center gap-2 rounded-md border px-3 py-2 text-sm font-semibold"
+                      type="button"
+                      onClick={() => addSuggestedSection(suggestion)}
+                    >
+                      <Plus size={15} /> Add
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </section>
+          ) : null}
 
           <section className="overflow-hidden rounded-lg border bg-card">
             <div className="border-b bg-muted/60 px-4 py-3">
               <h2 className="font-semibold text-primary">Page outline</h2>
               <p className="mt-1 text-sm text-muted-foreground">Edit content safely. Layout and styling stay controlled.</p>
             </div>
-            <div className="hidden grid-cols-[44px_1fr_120px_112px_120px] border-b bg-muted/30 px-4 py-3 text-sm font-semibold text-muted-foreground lg:grid">
-              <span className="sr-only">Move</span>
+            <div className="hidden grid-cols-[48px_minmax(0,1fr)_170px_72px] gap-x-6 border-b bg-muted/30 px-4 py-3 text-sm font-semibold text-muted-foreground lg:grid">
+              <span className="sr-only">Reorder</span>
               <span>Section</span>
-              <span>Importance</span>
-              <span>Status</span>
+              <span>State</span>
               <span>Actions</span>
             </div>
             {websiteSections.map((section, index) => {
@@ -776,27 +782,49 @@ export function WebsiteEditor() {
               const displayName = sectionDisplayName(section);
               const status = sectionStatus(section);
               return (
-                <div className="grid gap-4 border-b px-4 py-4 last:border-b-0 lg:grid-cols-[44px_1fr_120px_112px_120px] lg:items-center" key={section.id}>
-                  <div className="flex items-center gap-2">
+                <div
+                  className={`grid cursor-pointer gap-4 border-b px-4 py-4 transition hover:bg-muted/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary last:border-b-0 lg:grid-cols-[48px_minmax(0,1fr)_170px_72px] lg:items-center lg:gap-x-6 ${
+                    draggingSectionId === section.id ? "bg-muted/45" : ""
+                  }`}
+                  key={section.id}
+                  onClick={() => router.push(`/admin/website/sections/${section.id}`)}
+                  onDragOver={(event) => event.preventDefault()}
+                  onDrop={(event) => {
+                    event.preventDefault();
+                    if (draggingSectionId) {
+                      reorderSection(draggingSectionId, section.id);
+                    }
+                    setDraggingSectionId(null);
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      router.push(`/admin/website/sections/${section.id}`);
+                    }
+                  }}
+                  role="button"
+                  tabIndex={0}
+                >
+                  <button
+                    aria-label={`Drag to reorder ${displayName}`}
+                    className="grid h-9 w-9 cursor-grab place-items-center rounded border text-muted-foreground active:cursor-grabbing"
+                    draggable
+                    onClick={(event) => event.stopPropagation()}
+                    onDragEnd={() => setDraggingSectionId(null)}
+                    onDragStart={(event) => {
+                      event.stopPropagation();
+                      setDraggingSectionId(section.id);
+                      event.dataTransfer.effectAllowed = "move";
+                    }}
+                    title="Drag to reorder"
+                    type="button"
+                  >
                     <GripVertical size={18} aria-hidden="true" />
-                    <div className="flex gap-1 lg:grid lg:gap-1">
-                      <button className="grid h-6 w-6 place-items-center rounded border text-muted-foreground disabled:opacity-40" type="button" onClick={() => move(index, -1)} disabled={index === 0} aria-label={`Move ${displayName} up`}>
-                        <ArrowUp size={13} aria-hidden="true" />
-                      </button>
-                      <button className="grid h-6 w-6 place-items-center rounded border text-muted-foreground disabled:opacity-40" type="button" onClick={() => move(index, 1)} disabled={index === websiteSections.length - 1} aria-label={`Move ${displayName} down`}>
-                        <ArrowDown size={13} aria-hidden="true" />
-                      </button>
-                    </div>
-                  </div>
-                  <div>
+                  </button>
+                  <div title={guide.purpose}>
                     <p className="font-semibold text-primary">{displayName}</p>
-                    <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                      <span className="font-medium">{guide.label}</span> · {guide.purpose}
-                    </p>
+                    <p className="mt-1 text-sm text-muted-foreground">{guide.label}</p>
                   </div>
-                  <span className="w-fit rounded-md border bg-background px-3 py-1 text-sm font-semibold text-muted-foreground">
-                    {guide.importance}
-                  </span>
                   <button
                     className={`w-fit rounded-md px-3 py-1 text-sm font-semibold ${
                       status === "Complete"
@@ -806,18 +834,24 @@ export function WebsiteEditor() {
                           : "bg-secondary/15 text-secondary"
                     }`}
                     type="button"
-                    onClick={() => toggle(section.id)}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      toggle(section.id);
+                    }}
+                    title="Click to show or hide this section"
                   >
                     {status}
                   </button>
-                  <div className="flex items-center gap-2">
-                    <Link className="rounded-md border px-3 py-2 text-sm font-semibold" href={`/admin/website/sections/${section.id}`}>
-                      Edit
-                    </Link>
-                    <button className="rounded-md border p-2 text-destructive" type="button" onClick={() => requestRemove(section.id)} aria-label={`Remove ${displayName}`}>
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
+                  <details className="relative justify-self-start" onClick={(event) => event.stopPropagation()}>
+                    <summary className="grid h-9 w-9 cursor-pointer list-none place-items-center rounded border text-muted-foreground hover:bg-muted" aria-label={`Actions for ${displayName}`}>
+                      <MoreHorizontal size={18} aria-hidden="true" />
+                    </summary>
+                    <div className="absolute right-0 z-20 mt-2 grid min-w-36 overflow-hidden rounded-md border bg-card py-1 text-sm font-semibold shadow-xl">
+                      <button className="flex items-center gap-2 px-3 py-2 text-left text-destructive hover:bg-muted" type="button" onClick={() => requestRemove(section.id)}>
+                        <Trash2 size={15} aria-hidden="true" /> Delete
+                      </button>
+                    </div>
+                  </details>
                 </div>
               );
             })}

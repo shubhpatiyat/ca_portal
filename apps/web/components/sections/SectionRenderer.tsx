@@ -174,7 +174,7 @@ function ImageText({ section }: SectionProps<ImageTextSection>) {
   if (/security|secure|confidential|data|document/i.test(text)) {
     return <SecuritySection section={section} />;
   }
-  if (!/why we started|about/i.test(text) && /behind|slipping|deadline|cash flow|messy|pain|problem|growth/i.test(text)) {
+  if (!/why we started|about|tax notice|tax notices|received a notice/i.test(text) && /behind|slipping|deadline|cash flow|messy|pain|problem|growth/i.test(text)) {
     return <PainSection section={section} />;
   }
 

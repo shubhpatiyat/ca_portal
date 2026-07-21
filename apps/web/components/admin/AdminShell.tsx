@@ -6,16 +6,13 @@ import { usePathname, useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import {
   BadgeCheck,
-  BriefcaseBusiness,
   Building2,
   ContactRound,
   Files,
   Home,
   Inbox,
   LayoutDashboard,
-  MessageSquareQuote,
   Palette,
-  CircleHelp,
   Settings,
   Sparkles
 } from "lucide-react";
@@ -28,9 +25,6 @@ const navItems = [
   { label: "Clients", href: "/admin/clients", icon: ContactRound },
   { label: "Documents", href: "/admin/documents", icon: Files },
   { label: "My Website", href: "/admin/website", icon: Home },
-  { label: "Services", href: "/admin/services", icon: BriefcaseBusiness },
-  { label: "Client Reviews", href: "/admin/reviews", icon: MessageSquareQuote },
-  { label: "FAQs", href: "/admin/faqs", icon: CircleHelp },
   { label: "Contact Details", href: "/admin/contact-details", icon: Building2 },
   { label: "Branding", href: "/admin/branding", icon: Palette },
   { label: "Leads", href: "/admin/leads", icon: Inbox },
