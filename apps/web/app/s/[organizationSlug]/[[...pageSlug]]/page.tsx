@@ -5,7 +5,7 @@ import { PublicFooter } from "@/components/public/PublicFooter";
 import { PublicHeader } from "@/components/public/PublicHeader";
 import { SectionRenderer } from "@/components/sections/SectionRenderer";
 import { StructuredData } from "@/components/public/StructuredData";
-import { brandFaviconUrl } from "@/lib/brand";
+import { pageMetadata } from "@/lib/seo";
 
 type PageProps = {
   params: Promise<{
@@ -22,22 +22,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const resolved = await params;
   const page = await getPublicPage(resolved.organizationSlug, normalizePageSlug(resolved.pageSlug));
 
-  return {
-    title: page.seo.title,
-    description: page.seo.description,
-    alternates: {
-      canonical: page.seo.canonical_url
-    },
-    icons: {
-      icon: brandFaviconUrl(page.firm_name)
-    },
-    openGraph: {
-      title: page.seo.title,
-      description: page.seo.description,
-      url: page.seo.canonical_url,
-      type: "website"
-    }
-  };
+  return pageMetadata(page, false);
 }
 
 export default async function TenantSitePage({ params }: PageProps) {

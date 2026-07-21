@@ -494,36 +494,71 @@ export const sectionRegistry = {
   rich_text: RichText
 };
 
+function PageIntro({ page }: { page: PublicSitePage }) {
+  const headingByPage: Record<string, string> = {
+    home: `Chartered Accountant in ${page.city}`,
+    services: `CA Services in ${page.city}`,
+    about: `About ${page.firm_name}`,
+    contact: `Contact ${page.firm_name} in ${page.city}`
+  };
+  const descriptionByPage: Record<string, string> = {
+    home: page.seo.description,
+    services: `Income tax, GST, accounting, audit and compliance services for businesses, professionals and individuals in ${page.city}.`,
+    about: `Learn about ${page.firm_name} and its professional approach to tax, accounting and compliance work in ${page.city}.`,
+    contact: `Get in touch to discuss your income tax, GST, accounting, audit or compliance requirements.`
+  };
+  const heading = headingByPage[page.page_slug] ?? page.page_title;
+
+  return (
+    <section className="border-b border-border bg-white pb-16 pt-32 text-center md:pb-20 md:pt-40">
+      <div className="section-shell">
+        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-secondary">
+          Chartered Accountant in {page.city}
+        </p>
+        <h1 className="mx-auto mt-3 max-w-4xl font-serif text-4xl font-bold leading-tight text-primary md:text-6xl">
+          {heading}
+        </h1>
+        <p className="mx-auto mt-5 max-w-2xl text-lg leading-8 text-muted-foreground">
+          {descriptionByPage[page.page_slug] ?? page.seo.description}
+        </p>
+      </div>
+    </section>
+  );
+}
+
 export function SectionRenderer({ page }: { page: PublicSitePage }) {
+  const visibleSections = page.sections
+    .filter((section) => section.is_visible)
+    .sort((a, b) => a.position - b.position);
+  const hasHero = visibleSections.some((section) => section.section_type === "hero");
+
   return (
     <>
-      {page.sections
-        .filter((section) => section.is_visible)
-        .sort((a, b) => a.position - b.position)
-        .map((section) => {
-          switch (section.section_type) {
-            case "hero":
-              return <Hero key={section.id} section={section} page={page} />;
-            case "trust_stats":
-              return <TrustStats key={section.id} section={section} page={page} />;
-            case "service_grid":
-              return <ServiceGrid key={section.id} section={section} page={page} />;
-            case "image_text":
-              return <ImageText key={section.id} section={section} page={page} />;
-            case "founder_profile":
-              return <FounderProfile key={section.id} section={section} page={page} />;
-            case "testimonials":
-              return <Testimonials key={section.id} section={section} page={page} />;
-            case "faq":
-              return <FAQ key={section.id} section={section} page={page} />;
-            case "cta_banner":
-              return <CTABanner key={section.id} section={section} page={page} />;
-            case "contact_form":
-              return <ContactForm key={section.id} section={section} page={page} />;
-            case "rich_text":
-              return <RichText key={section.id} section={section} page={page} />;
-          }
-        })}
+      {!hasHero ? <PageIntro page={page} /> : null}
+      {visibleSections.map((section) => {
+        switch (section.section_type) {
+          case "hero":
+            return <Hero key={section.id} section={section} page={page} />;
+          case "trust_stats":
+            return <TrustStats key={section.id} section={section} page={page} />;
+          case "service_grid":
+            return <ServiceGrid key={section.id} section={section} page={page} />;
+          case "image_text":
+            return <ImageText key={section.id} section={section} page={page} />;
+          case "founder_profile":
+            return <FounderProfile key={section.id} section={section} page={page} />;
+          case "testimonials":
+            return <Testimonials key={section.id} section={section} page={page} />;
+          case "faq":
+            return <FAQ key={section.id} section={section} page={page} />;
+          case "cta_banner":
+            return <CTABanner key={section.id} section={section} page={page} />;
+          case "contact_form":
+            return <ContactForm key={section.id} section={section} page={page} />;
+          case "rich_text":
+            return <RichText key={section.id} section={section} page={page} />;
+        }
+      })}
     </>
   );
 }

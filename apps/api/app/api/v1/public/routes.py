@@ -11,8 +11,13 @@ router = APIRouter(prefix="/public", tags=["public"])
 
 
 @router.get("/sites/by-slug/{organization_slug}/pages/{page_slug}", response_model=PublicSitePage)
-def public_site_by_slug(organization_slug: str, page_slug: str, db: Session = Depends(get_db)) -> PublicSitePage:
-    return PageService(db).public_by_slug(organization_slug, page_slug)
+def public_site_by_slug(
+    organization_slug: str,
+    page_slug: str,
+    db: Session = Depends(get_db),
+    settings: Settings = Depends(get_settings),
+) -> PublicSitePage:
+    return PageService(db).public_by_slug(organization_slug, page_slug, settings)
 
 
 @router.get("/sites/by-host/pages/{page_slug}", response_model=PublicSitePage)

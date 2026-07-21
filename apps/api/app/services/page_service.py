@@ -109,6 +109,42 @@ def build_whatsapp_url(value: str) -> str:
     return f"https://wa.me/{digits}"
 
 
+def build_seo_copy(
+    page_slug: str,
+    page_title: str,
+    firm_name: str,
+    city: str,
+    founder_name: str | None = None,
+) -> tuple[str, str]:
+    if page_slug == "home":
+        title = (
+            f"{founder_name}, Chartered Accountant in {city} | {firm_name}"
+            if founder_name
+            else f"Chartered Accountant in {city} | {firm_name}"
+        )
+        description = (
+            f"{firm_name} provides income tax, GST, accounting, audit and compliance services "
+            f"for businesses, professionals and individuals in {city}."
+        )
+        return title, description
+    if page_slug == "services":
+        return (
+            f"CA Services in {city} | {firm_name}",
+            f"Explore income tax, GST, accounting, audit and compliance services from {firm_name} in {city}.",
+        )
+    if page_slug == "about":
+        return (
+            f"About {firm_name} | Chartered Accountant in {city}",
+            f"Learn about {firm_name} and its professional tax, accounting and compliance services in {city}.",
+        )
+    if page_slug == "contact":
+        return (
+            f"Contact {firm_name} | Chartered Accountant in {city}",
+            f"Contact {firm_name} for income tax, GST, accounting, audit and compliance services in {city}.",
+        )
+    return f"{page_title} | {firm_name}", f"{page_title} information from {firm_name} in {city}."
+
+
 class PageService:
     def __init__(self, db: Session) -> None:
         self.db = db
@@ -327,17 +363,18 @@ class PageService:
         self.db.commit()
         return restored
 
-    def public_by_slug(self, organization_slug: str, page_slug: str) -> PublicSitePage:
+    def public_by_slug(self, organization_slug: str, page_slug: str, settings: Settings) -> PublicSitePage:
         organization = self.db.execute(select(Organization).where(Organization.slug == organization_slug)).scalar_one_or_none()
         if not organization:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Site not found.")
+        public_base_url = self._primary_public_base_url(organization.id, settings)
         try:
             page, revision = self._get_page_and_revision(organization.id, page_slug, draft=False)
-            return self._public_payload(page, revision, organization.slug)
+            return self._public_payload(page, revision, organization.slug, public_base_url)
         except HTTPException as exc:
             if exc.status_code == status.HTTP_404_NOT_FOUND and page_slug in {"services", "about", "contact"}:
                 home_page, home_revision = self._get_page_and_revision(organization.id, "home", draft=False)
-                return self._derived_public_payload(home_page, home_revision, organization.slug, page_slug)
+                return self._derived_public_payload(home_page, home_revision, organization.slug, page_slug, public_base_url)
             raise
 
     def public_by_host(self, hostname: str, page_slug: str, settings: Settings, scheme: str = "https") -> PublicSitePage:
@@ -377,6 +414,23 @@ class PageService:
             select(WebsiteConfig).where(WebsiteConfig.default_subdomain == subdomain)
         ).scalar_one_or_none()
         return config.organization_id if config else None
+
+    def _primary_public_base_url(self, organization_id: str, settings: Settings) -> str | None:
+        primary_domain = self.db.execute(
+            select(Domain).where(
+                Domain.organization_id == organization_id,
+                Domain.is_primary.is_(True),
+                Domain.is_verified.is_(True),
+                Domain.provisioning_status == "ready",
+            )
+        ).scalar_one_or_none()
+        if primary_domain:
+            scheme = settings.platform_scheme if primary_domain.domain_type == "platform" else "https"
+            return f"{scheme.rstrip(':/')}://{primary_domain.hostname}"
+        config = self.db.execute(
+            select(WebsiteConfig).where(WebsiteConfig.organization_id == organization_id)
+        ).scalar_one_or_none()
+        return build_platform_url(config.default_subdomain if config else None, settings)
 
     def _page_for_tenant(self, organization_id: str, page_slug: str) -> WebsitePage:
         page = self.db.execute(
@@ -456,21 +510,29 @@ class PageService:
         contact = self._contact_from_config(config)
         base_url = public_base_url or f"http://localhost:3000/s/{organization_slug}"
         canonical = base_url if page.slug == "home" else f"{base_url}/{page.slug}"
+        firm_name = organization.name if organization else organization_slug
+        city = organization.city if organization else ""
+        founder_name = next(
+            (
+                section.content_json.founder_name
+                for section in sections
+                if section.section_type == "founder_profile" and section.is_visible
+            ),
+            None,
+        )
+        title, description = build_seo_copy(page.slug, page.title, firm_name, city, founder_name)
         return PublicSitePage(
             organization_id=page.organization_id,
             organization_slug=organization_slug,
-            firm_name=organization.name if organization else organization_slug,
-            city=organization.city if organization else "",
+            firm_name=firm_name,
+            city=city,
             template_key=config.template_key,
             theme_key=config.theme_key,
             page_slug=page.slug,
             page_title=page.title,
             seo=SeoPayload(
-                title=f"Outsourced Accounts Management for MSMEs | {organization.name if organization else organization_slug}",
-                description=(
-                    "Expert outsourced accounts management for growing businesses: accurate books, on-time payments, "
-                    "full transparency. No in-house overhead. Free consultation."
-                ),
+                title=title,
+                description=description,
                 canonical_url=canonical,
             ),
             contact=contact,
@@ -500,13 +562,14 @@ class PageService:
         allowed_types = section_types_by_page[page_slug]
         base_url = public_base_url or f"http://localhost:3000/s/{organization_slug}"
         title = title_by_page[page_slug]
+        seo_title, seo_description = build_seo_copy(page_slug, title, payload.firm_name, payload.city)
         return payload.model_copy(
             update={
                 "page_slug": page_slug,
                 "page_title": title,
                 "seo": SeoPayload(
-                    title=f"{title} | {payload.firm_name}",
-                    description=f"{title} information for outsourced accounts management at {payload.firm_name}.",
+                    title=seo_title,
+                    description=seo_description,
                     canonical_url=f"{base_url}/{page_slug}",
                 ),
                 "sections": [section for section in payload.sections if section.section_type in allowed_types],
