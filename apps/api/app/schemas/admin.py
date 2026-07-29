@@ -138,6 +138,24 @@ class LeadUpdate(BaseModel):
     status: Literal["new", "contacted", "closed"]
 
 
+class AnalyticsMetricOut(BaseModel):
+    value: float
+    previous: float
+    change_percent: float | None = None
+
+
+class AnalyticsSummaryOut(BaseModel):
+    period_days: Literal[7, 30, 90]
+    visitors: AnalyticsMetricOut
+    page_views: AnalyticsMetricOut
+    new_enquiries: AnalyticsMetricOut
+    conversion_rate: AnalyticsMetricOut
+    phone_clicks: AnalyticsMetricOut
+    whatsapp_clicks: AnalyticsMetricOut
+    email_clicks: AnalyticsMetricOut
+    client_logins: AnalyticsMetricOut
+
+
 class PresignUploadRequest(BaseModel):
     purpose: Literal["logos", "heroes", "founders", "testimonials"]
     file_name: str

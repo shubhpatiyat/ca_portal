@@ -13,6 +13,7 @@ from app.models import ClientCompany, CompanyDocument, DocumentUploadSession, Fi
 from app.schemas.admin import (
     ClientCompanyCreate,
     ClientCompanyOut,
+    AnalyticsSummaryOut,
     CompanyDocumentCreate,
     CompanyDocumentOut,
     ConfirmUploadRequest,
@@ -35,6 +36,7 @@ from app.schemas.admin import (
 )
 from app.schemas.public import PublicSitePage
 from app.services.domain_service import DomainService
+from app.services.analytics_service import AnalyticsService
 from app.services.client_portal_auth import hash_client_password
 from app.services.lead_service import LeadService
 from app.services.media_service import MediaService
@@ -501,6 +503,17 @@ def leads(
 @router.patch("/leads/{lead_id}", response_model=LeadOut)
 def update_lead(lead_id: str, payload: LeadUpdate, tenant: TenantContext = Depends(require_editor), db: Session = Depends(get_db)) -> LeadOut:
     return LeadService(db).update_admin_lead(tenant, lead_id, payload)
+
+
+@router.get("/analytics/summary", response_model=AnalyticsSummaryOut)
+def analytics_summary(
+    days: int = Query(default=30),
+    tenant: TenantContext = Depends(get_tenant_context),
+    db: Session = Depends(get_db),
+) -> AnalyticsSummaryOut:
+    if days not in {7, 30, 90}:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Days must be 7, 30, or 90.")
+    return AnalyticsService(db).summary(tenant, days)
 
 
 @router.post("/media/presign-upload", response_model=PresignUploadOut)

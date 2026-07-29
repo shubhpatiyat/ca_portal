@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getPublicPage } from "@/lib/api/public";
 import { PublicFooter } from "@/components/public/PublicFooter";
 import { PublicHeader } from "@/components/public/PublicHeader";
+import { PublicAnalytics } from "@/components/public/PublicAnalytics";
 import { SectionRenderer } from "@/components/sections/SectionRenderer";
 import { StructuredData } from "@/components/public/StructuredData";
 import { pageMetadata } from "@/lib/seo";
@@ -38,6 +39,7 @@ export default async function TenantSitePage({ params }: PageProps) {
   return (
     <div data-theme={page.theme_key}>
       <StructuredData page={page} />
+      <PublicAnalytics page={page} />
       <PublicHeader page={page} />
       <main>
         <SectionRenderer page={page} />

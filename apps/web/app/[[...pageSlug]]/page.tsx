@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import { PublicFooter } from "@/components/public/PublicFooter";
 import { PublicHeader } from "@/components/public/PublicHeader";
+import { PublicAnalytics } from "@/components/public/PublicAnalytics";
 import { SectionRenderer } from "@/components/sections/SectionRenderer";
 import { StructuredData } from "@/components/public/StructuredData";
 import { getPublicPageByHost, normalizePublicHost } from "@/lib/api/public";
@@ -65,6 +66,7 @@ export default async function HostTenantSitePage({ params }: PageProps) {
     return (
       <div data-theme={page.theme_key}>
         <StructuredData page={page} />
+        <PublicAnalytics page={page} />
         <PublicHeader page={page} basePath="" />
         <main>
           <SectionRenderer page={page} />

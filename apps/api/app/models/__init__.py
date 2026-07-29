@@ -1,4 +1,5 @@
 from app.models.organization import (
+    AnalyticsEvent,
     AuditLog,
     Domain,
     Lead,
@@ -13,6 +14,7 @@ from app.models.organization import (
 from app.models.client_manager import ClientCompany, CompanyDocument, DocumentUploadSession, FirmClient
 
 __all__ = [
+    "AnalyticsEvent",
     "AuditLog",
     "ClientCompany",
     "CompanyDocument",

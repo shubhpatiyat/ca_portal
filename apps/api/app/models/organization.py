@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import uuid4
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint, func
+from sqlalchemy import Boolean, DateTime, ForeignKey, Index, Integer, String, Text, UniqueConstraint, func
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -33,6 +33,9 @@ class Organization(Base, TimestampMixin):
     pages: Mapped[list["WebsitePage"]] = relationship(back_populates="organization", cascade="all, delete-orphan", passive_deletes=True)
     media_assets: Mapped[list["MediaAsset"]] = relationship(back_populates="organization", cascade="all, delete-orphan", passive_deletes=True)
     leads: Mapped[list["Lead"]] = relationship(back_populates="organization", cascade="all, delete-orphan", passive_deletes=True)
+    analytics_events: Mapped[list["AnalyticsEvent"]] = relationship(
+        back_populates="organization", cascade="all, delete-orphan", passive_deletes=True
+    )
     audit_logs: Mapped[list["AuditLog"]] = relationship(back_populates="organization", cascade="all, delete-orphan", passive_deletes=True)
 
 
@@ -174,6 +177,26 @@ class Lead(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     organization: Mapped[Organization] = relationship(back_populates="leads")
+
+
+class AnalyticsEvent(Base):
+    __tablename__ = "analytics_events"
+    __table_args__ = (
+        Index("ix_analytics_org_created", "organization_id", "created_at"),
+        Index("ix_analytics_org_type_created", "organization_id", "event_type", "created_at"),
+    )
+
+    id: Mapped[str] = mapped_column(UUID(as_uuid=False), primary_key=True, default=lambda: str(uuid4()))
+    organization_id: Mapped[str] = mapped_column(
+        UUID(as_uuid=False), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False
+    )
+    event_type: Mapped[str] = mapped_column(String(40), nullable=False)
+    page_slug: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    hostname: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    session_id_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    organization: Mapped[Organization] = relationship(back_populates="analytics_events")
 
 
 class AuditLog(Base):

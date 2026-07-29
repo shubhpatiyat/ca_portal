@@ -53,3 +53,11 @@ class LeadCreate(BaseModel):
 class LeadCreated(BaseModel):
     id: str
     status: str
+
+
+class AnalyticsEventCreate(BaseModel):
+    organization_slug: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=140)]
+    event_type: Literal["page_view", "phone_click", "whatsapp_click", "email_click"]
+    page_slug: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=80)]
+    hostname: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=255)]
+    session_id: Annotated[str, StringConstraints(strip_whitespace=True, min_length=16, max_length=80)]

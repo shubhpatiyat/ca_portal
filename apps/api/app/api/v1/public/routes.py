@@ -3,7 +3,8 @@ from sqlalchemy.orm import Session
 
 from app.core.config import Settings, get_settings
 from app.db.session import get_db
-from app.schemas.public import LeadCreate, LeadCreated, PublicSitePage
+from app.schemas.public import AnalyticsEventCreate, LeadCreate, LeadCreated, PublicSitePage
+from app.services.analytics_service import AnalyticsService
 from app.services.lead_service import LeadService
 from app.services.page_service import PageService
 
@@ -43,3 +44,13 @@ def create_lead(payload: LeadCreate, request: Request, db: Session = Depends(get
     client_key = request.client.host if request.client else "unknown"
     lead = LeadService(db).create_public_lead(payload, client_key)
     return LeadCreated(id=lead.id, status=lead.status)
+
+
+@router.post("/analytics/events", status_code=204)
+def create_analytics_event(
+    payload: AnalyticsEventCreate,
+    request: Request,
+    db: Session = Depends(get_db),
+    settings: Settings = Depends(get_settings),
+) -> None:
+    AnalyticsService(db).record_public_event(payload, request.headers.get("user-agent", ""), settings)

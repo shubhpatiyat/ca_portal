@@ -1,4 +1,5 @@
 from app.models import (
+    AnalyticsEvent,
     AuditLog,
     Domain,
     Lead,
@@ -24,6 +25,7 @@ def test_organization_owned_rows_cascade_on_delete() -> None:
     assert _ondelete_for(WebsitePage, "organization_id") == "CASCADE"
     assert _ondelete_for(MediaAsset, "organization_id") == "CASCADE"
     assert _ondelete_for(Lead, "organization_id") == "CASCADE"
+    assert _ondelete_for(AnalyticsEvent, "organization_id") == "CASCADE"
     assert _ondelete_for(AuditLog, "organization_id") == "CASCADE"
 
 

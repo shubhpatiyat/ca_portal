@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from app.core.config import Settings, get_settings
 from app.db.session import get_db
 from app.models import ClientCompany, CompanyDocument, DocumentUploadSession, FirmClient, Organization
+from app.services.analytics_service import AnalyticsService
 from app.services.client_portal_auth import (
     ClientPortalSession,
     create_client_token,
@@ -141,6 +142,7 @@ def login_client(
     if not client or not verify_client_password(payload.password, client.password_hash):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password for this firm.")
     client.last_login_at = datetime.now(timezone.utc)
+    AnalyticsService(db).record_client_login(organization.id)
     db.commit()
     return ClientLoginOut(
         access_token=create_client_token(client, settings),

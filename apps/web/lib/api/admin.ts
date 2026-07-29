@@ -31,6 +31,24 @@ export type Lead = {
   created_at: string;
 };
 
+export type AnalyticsMetric = {
+  value: number;
+  previous: number;
+  change_percent?: number | null;
+};
+
+export type AnalyticsSummary = {
+  period_days: 7 | 30 | 90;
+  visitors: AnalyticsMetric;
+  page_views: AnalyticsMetric;
+  new_enquiries: AnalyticsMetric;
+  conversion_rate: AnalyticsMetric;
+  phone_clicks: AnalyticsMetric;
+  whatsapp_clicks: AnalyticsMetric;
+  email_clicks: AnalyticsMetric;
+  client_logins: AnalyticsMetric;
+};
+
 export type FirmClient = {
   id: string;
   name: string;
@@ -280,6 +298,8 @@ export const adminApi = {
       method: "DELETE"
     }),
   leads: () => request<Lead[]>("/api/v1/admin/leads"),
+  analyticsSummary: (days: 7 | 30 | 90) =>
+    request<AnalyticsSummary>(`/api/v1/admin/analytics/summary?days=${days}`),
   updateLead: (leadId: string, status: Lead["status"]) =>
     request<Lead>(`/api/v1/admin/leads/${leadId}`, {
       method: "PATCH",
