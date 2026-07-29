@@ -6,8 +6,7 @@ function socialImage(page: PublicSitePage): string | undefined {
   for (const section of page.sections) {
     if (
       (section.section_type === "hero" ||
-        section.section_type === "image_text" ||
-        section.section_type === "founder_profile") &&
+        section.section_type === "image_text") &&
       section.content_json.image_url
     ) {
       return section.content_json.image_url;

@@ -4,7 +4,6 @@ from app.schemas.admin import OnboardingRequest
 
 HERO_IMAGE_URL = "https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&w=1200&q=80"
 OFFICE_IMAGE_URL = "https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1200&q=80"
-FOUNDER_IMAGE_URL = "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=900&q=80"
 
 
 def slugify(value: str) -> str:
