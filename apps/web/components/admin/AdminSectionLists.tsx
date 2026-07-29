@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useQueryClient } from "@tanstack/react-query";
 import type { FaqSection, PageSection, ServiceGridSection, TestimonialsSection } from "@/types/site";
 import { adminApi } from "@/lib/api/admin";
+import { randomId } from "@/lib/random-id";
 
 export function ServicesFromApi() {
   const pageQuery = useQuery({ queryKey: ["admin-page", "home"], queryFn: adminApi.homePage, retry: false });
@@ -250,7 +251,7 @@ function upsertFaqSection(
   const nextSections: PageSection[] = sections.filter((section) => section.section_type !== "faq");
   if (cleanItems.length) {
     nextSections.push({
-      id: existing?.id ?? crypto.randomUUID(),
+      id: existing?.id ?? randomId(),
       admin_label: existing?.admin_label ?? "FAQs",
       section_type: "faq",
       position: nextSections.length + 1,
@@ -276,7 +277,7 @@ function upsertTestimonialsSection(
   const nextSections: PageSection[] = sections.filter((section) => section.section_type !== "testimonials");
   if (cleanTestimonials.length) {
     nextSections.push({
-      id: existing?.id ?? crypto.randomUUID(),
+      id: existing?.id ?? randomId(),
       admin_label: existing?.admin_label ?? "Client reviews",
       section_type: "testimonials",
       position: nextSections.length + 1,

@@ -1,6 +1,7 @@
 import { unstable_cache } from "next/cache";
 import type { LeadPayload, PublicSitePage } from "@/types/site";
 import { pageFromSlug } from "@/lib/demo-site";
+import { randomId } from "@/lib/random-id";
 
 const apiBaseUrl = process.env.API_BASE_URL ?? process.env.NEXT_PUBLIC_API_URL;
 const shouldCachePublicPages = process.env.NODE_ENV === "production";
@@ -97,7 +98,7 @@ export function getPublicPageByHost(host: string, pageSlug: string): Promise<Pub
 export async function submitLead(payload: LeadPayload): Promise<{ id: string; status: string }> {
   const leadApiBaseUrl = typeof window === "undefined" ? apiBaseUrl : "/backend";
   if (!leadApiBaseUrl) {
-    return { id: crypto.randomUUID(), status: "new" };
+    return { id: randomId(), status: "new" };
   }
 
   return fetchJson<{ id: string; status: string }>(`${leadApiBaseUrl}/api/v1/public/leads`, {

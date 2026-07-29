@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { trackPublicEvent, type PublicAnalyticsEvent } from "@/lib/api/public";
+import { randomId } from "@/lib/random-id";
 import type { PublicSitePage } from "@/types/site";
 
 const sessionKey = "ca-public-analytics-session";
@@ -12,11 +13,11 @@ function analyticsSessionId(): string {
     if (existing) {
       return existing;
     }
-    const created = crypto.randomUUID();
+    const created = randomId();
     window.sessionStorage.setItem(sessionKey, created);
     return created;
   } catch {
-    return crypto.randomUUID();
+    return randomId();
   }
 }
 

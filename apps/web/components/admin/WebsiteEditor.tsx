@@ -23,6 +23,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { PageSection } from "@/types/site";
 import { adminApi } from "@/lib/api/admin";
 import { resolveAdminWebsiteUrl } from "@/lib/admin/website-url";
+import { randomId } from "@/lib/random-id";
 import { Button, ButtonLink } from "@/components/ui/Button";
 
 type SectionImportance = "Required" | "Recommended" | "Optional";
@@ -184,7 +185,7 @@ const suggestedSections: SuggestedSection[] = [
     title: "Trust proof",
     description: "Add numbers or proof that reduce hesitation.",
     section: () => ({
-      id: crypto.randomUUID(),
+      id: randomId(),
       admin_label: "Trust indicators",
       section_type: "trust_stats",
       position: 1,
@@ -205,7 +206,7 @@ const suggestedSections: SuggestedSection[] = [
     title: "Client concerns we solve",
     description: "Show visitors the tax, compliance, or bookkeeping problems you help fix.",
     section: () => ({
-      id: crypto.randomUUID(),
+      id: randomId(),
       admin_label: "Client concerns",
       section_type: "image_text",
       position: 1,
@@ -225,7 +226,7 @@ const suggestedSections: SuggestedSection[] = [
     title: "How it works",
     description: "Make onboarding feel simple and safe.",
     section: () => ({
-      id: crypto.randomUUID(),
+      id: randomId(),
       admin_label: "How we work",
       section_type: "rich_text",
       position: 1,
@@ -243,7 +244,7 @@ const suggestedSections: SuggestedSection[] = [
     title: "Security block",
     description: "Reassure buyers before they share sensitive financial data.",
     section: () => ({
-      id: crypto.randomUUID(),
+      id: randomId(),
       admin_label: "Data security",
       section_type: "image_text",
       position: 1,
@@ -263,7 +264,7 @@ const suggestedSections: SuggestedSection[] = [
     title: "Final CTA",
     description: "Give visitors one last clear action near the bottom.",
     section: () => ({
-      id: crypto.randomUUID(),
+      id: randomId(),
       admin_label: "Final consultation CTA",
       section_type: "cta_banner",
       position: 1,
@@ -296,7 +297,7 @@ function contextualSuggestions(sections: PageSection[]): SuggestedSection[] {
       title: "Incorporation process",
       description: "Helpful for startup or business-registration focused firms.",
       section: () => ({
-        id: crypto.randomUUID(),
+        id: randomId(),
         admin_label: "Incorporation process",
         section_type: "rich_text",
         position: 1,
@@ -317,7 +318,7 @@ function contextualSuggestions(sections: PageSection[]): SuggestedSection[] {
       title: "Tax notice support",
       description: "Useful if clients often arrive with notices or filing doubts.",
       section: () => ({
-        id: crypto.randomUUID(),
+        id: randomId(),
         admin_label: "Tax notice support",
         section_type: "image_text",
         position: 1,
@@ -338,7 +339,7 @@ function contextualSuggestions(sections: PageSection[]): SuggestedSection[] {
     title: "Office location",
     description: "Good for local firms where walk-ins and city trust matter.",
     section: () => ({
-      id: crypto.randomUUID(),
+      id: randomId(),
       admin_label: "Office location",
       section_type: "image_text",
       position: 1,
