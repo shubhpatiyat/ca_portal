@@ -64,7 +64,7 @@ export default async function HostTenantSitePage({ params }: PageProps) {
   try {
     const page = await getPublicPageByHost(host, pageSlug);
     return (
-      <div data-theme={page.theme_key}>
+      <div className="public-site" data-theme={page.theme_key}>
         <StructuredData page={page} />
         <PublicAnalytics page={page} />
         <PublicHeader page={page} basePath="" />

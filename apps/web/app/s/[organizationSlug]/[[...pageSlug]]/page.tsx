@@ -37,7 +37,7 @@ export default async function TenantSitePage({ params }: PageProps) {
   const page = await getPublicPage(resolved.organizationSlug, pageSlug);
 
   return (
-    <div data-theme={page.theme_key}>
+    <div className="public-site" data-theme={page.theme_key}>
       <StructuredData page={page} />
       <PublicAnalytics page={page} />
       <PublicHeader page={page} />

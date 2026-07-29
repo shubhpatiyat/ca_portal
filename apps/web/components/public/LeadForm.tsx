@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { ArrowRight } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -54,46 +55,44 @@ export function LeadForm({
   }
 
   return (
-    <form
-      className="text-foreground"
-      onSubmit={form.handleSubmit(onSubmit)}
-    >
-      <div className="grid gap-6">
-        <label className="grid gap-2 text-sm font-medium">
+    <form className="text-[#0b1f33]" onSubmit={form.handleSubmit(onSubmit)}>
+      <div className="grid gap-3.5">
+        <label className="grid gap-2 text-[13px] font-bold">
           Name
-          <input className="min-h-12 rounded-lg border border-border bg-muted/55 px-3 outline-none transition focus:border-secondary focus:ring-2 focus:ring-secondary/30" placeholder="Enter your name" {...form.register("name")} />
-          {form.formState.errors.name ? <span className="text-destructive">{form.formState.errors.name.message}</span> : null}
+          <input className="min-h-11 rounded-xl border border-[#d8e2ec] bg-white px-3.5 font-normal outline-none transition placeholder:text-[#516173]/60 focus:border-[#0e7cff] focus:ring-4 focus:ring-[#0e7cff]/10" placeholder="Name" autoComplete="name" {...form.register("name")} />
+          {form.formState.errors.name ? <span className="font-medium text-red-600">{form.formState.errors.name.message}</span> : null}
         </label>
-        <div className="grid gap-6 md:grid-cols-2">
-          <label className="grid gap-2 text-sm font-medium">
-            Business Name
-            <input className="min-h-12 rounded-lg border border-border bg-muted/55 px-3 outline-none transition focus:border-secondary focus:ring-2 focus:ring-secondary/30" placeholder="Your business name" {...form.register("business_name")} />
-          </label>
-          <label className="grid gap-2 text-sm font-medium">
+        <label className="grid gap-2 text-[13px] font-bold">
+          Business Name
+          <input className="min-h-11 rounded-xl border border-[#d8e2ec] bg-white px-3.5 font-normal outline-none transition placeholder:text-[#516173]/60 focus:border-[#0e7cff] focus:ring-4 focus:ring-[#0e7cff]/10" placeholder="Business Name" autoComplete="organization" {...form.register("business_name")} />
+        </label>
+        <div className="grid gap-3.5 sm:grid-cols-2">
+          <label className="grid gap-2 text-[13px] font-bold">
             City
-            <input className="min-h-12 rounded-lg border border-border bg-muted/55 px-3 outline-none transition focus:border-secondary focus:ring-2 focus:ring-secondary/30" placeholder="Your city" {...form.register("city")} />
+            <input className="min-h-11 rounded-xl border border-[#d8e2ec] bg-white px-3.5 font-normal outline-none transition placeholder:text-[#516173]/60 focus:border-[#0e7cff] focus:ring-4 focus:ring-[#0e7cff]/10" placeholder="City" autoComplete="address-level2" {...form.register("city")} />
+          </label>
+          <label className="grid gap-2 text-[13px] font-bold">
+            Email
+            <input className="min-h-11 rounded-xl border border-[#d8e2ec] bg-white px-3.5 font-normal outline-none transition placeholder:text-[#516173]/60 focus:border-[#0e7cff] focus:ring-4 focus:ring-[#0e7cff]/10" placeholder="Email" type="email" autoComplete="email" {...form.register("email")} />
           </label>
         </div>
-        <label className="grid gap-2 text-sm font-medium">
-          Phone Number
-          <input className="min-h-12 rounded-lg border border-border bg-muted/55 px-3 outline-none transition focus:border-secondary focus:ring-2 focus:ring-secondary/30" placeholder="+91 98765 43210" {...form.register("phone")} />
+        <label className="grid gap-2 text-[13px] font-bold">
+          Phone No.
+          <input className="min-h-11 rounded-xl border border-[#d8e2ec] bg-white px-3.5 font-normal outline-none transition placeholder:text-[#516173]/60 focus:border-[#0e7cff] focus:ring-4 focus:ring-[#0e7cff]/10" placeholder="Phone No." type="tel" autoComplete="tel" {...form.register("phone")} />
+          {form.formState.errors.phone ? <span className="font-medium text-red-600">{form.formState.errors.phone.message}</span> : null}
         </label>
-        <label className="grid gap-2 text-sm font-medium">
-          Email
-          <input className="min-h-12 rounded-lg border border-border bg-muted/55 px-3 outline-none transition focus:border-secondary focus:ring-2 focus:ring-secondary/30" placeholder="you@example.com" type="email" {...form.register("email")} />
-        </label>
-        <label className="grid gap-2 text-sm font-medium">
+        <label className="grid gap-2 text-[13px] font-bold">
           What are you looking for?
-          <select className="min-h-12 rounded-lg border border-border bg-muted/55 px-3 outline-none transition focus:border-secondary focus:ring-2 focus:ring-secondary/30" {...form.register("inquiry_type")}>
+          <select className="min-h-11 rounded-xl border border-[#d8e2ec] bg-white px-3.5 font-normal outline-none transition focus:border-[#0e7cff] focus:ring-4 focus:ring-[#0e7cff]/10" {...form.register("inquiry_type")}>
             <option>Free consultation</option>
             <option>General inquiry</option>
             <option>Join our team</option>
             <option>Other</option>
           </select>
         </label>
-        <label className="grid gap-2 text-sm font-medium">
-          Your Message
-          <textarea className="min-h-32 rounded-lg border border-border bg-muted/55 px-3 py-2 outline-none transition focus:border-secondary focus:ring-2 focus:ring-secondary/30" placeholder="How can we help you?" {...form.register("message")} />
+        <label className="grid gap-2 text-[13px] font-bold">
+          Message
+          <textarea className="min-h-24 resize-y rounded-xl border border-[#d8e2ec] bg-white px-3.5 py-3 font-normal outline-none transition placeholder:text-[#516173]/60 focus:border-[#0e7cff] focus:ring-4 focus:ring-[#0e7cff]/10" placeholder="Message" {...form.register("message")} />
         </label>
         <label className="hidden">
           Website
@@ -101,13 +100,14 @@ export function LeadForm({
         </label>
       </div>
       <button
-        className="mt-6 min-h-12 w-full rounded-lg bg-secondary px-4 py-3 text-sm font-semibold uppercase tracking-[0.05em] text-secondary-foreground shadow-md transition hover:opacity-90 disabled:opacity-60"
+        className="mt-5 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-[#0e7cff] px-5 py-3 text-sm font-extrabold text-white shadow-[0_10px_24px_rgba(14,124,255,0.22)] transition hover:-translate-y-0.5 hover:bg-[#0872ec] disabled:translate-y-0 disabled:opacity-60"
         disabled={isPending}
         type="submit"
       >
-        {isPending ? "Sending..." : "Send Message"}
+        {isPending ? "Sending..." : "Book a Free Consultation"}
+        {!isPending ? <ArrowRight size={17} aria-hidden="true" /> : null}
       </button>
-      {saved ? <p className="mt-3 text-sm font-medium text-accent">Request saved. The firm can now see it in Leads.</p> : null}
+      {saved ? <p className="mt-3 text-sm font-semibold text-[#059669]">Thank you. Your request has been sent.</p> : null}
     </form>
   );
 }
