@@ -1,6 +1,23 @@
 export type TemplateKey = "modern_ca" | "traditional_ca" | "premium_ca";
 export type ThemeKey = "navy_gold" | "emerald_cream" | "charcoal_blue";
 
+export type LegalDocument = {
+  enabled: boolean;
+  content: string;
+};
+
+export type LegalDocuments = {
+  privacy_policy: LegalDocument;
+  terms_of_service: LegalDocument;
+  nda_confidentiality: LegalDocument;
+};
+
+export const EMPTY_LEGAL_DOCUMENTS: LegalDocuments = {
+  privacy_policy: { enabled: false, content: "" },
+  terms_of_service: { enabled: false, content: "" },
+  nda_confidentiality: { enabled: false, content: "" }
+};
+
 export type Cta = {
   label: string;
   href: string;
@@ -156,6 +173,7 @@ export type PublicSitePage = {
     email: string;
     address: string;
   };
+  legal_documents: LegalDocuments;
   sections: PageSection[];
   published_at: string;
 };

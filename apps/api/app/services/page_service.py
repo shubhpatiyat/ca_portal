@@ -20,7 +20,7 @@ from app.models import (
     WebsitePage,
 )
 from app.schemas.admin import OnboardingRequest, TenantContext
-from app.schemas.public import ContactDetails, PublicSitePage, SeoPayload
+from app.schemas.public import ContactDetails, LegalDocuments, PublicSitePage, SeoPayload
 from app.schemas.sections import PageSection, validate_sections
 from app.services.default_content import default_home_sections, slugify
 from app.services.section_assets import assert_assets_belong_to_org
@@ -46,6 +46,12 @@ RESERVED_SUBDOMAINS = {
     "status",
     "support",
     "www",
+}
+
+LEGAL_DOCUMENT_PAGES = {
+    "privacy_policy": ("privacy-policy", "Privacy Policy"),
+    "terms_of_service": ("terms-of-service", "Terms of Service"),
+    "nda_confidentiality": ("nda-confidentiality", "NDA & Confidentiality Commitment"),
 }
 
 
@@ -308,6 +314,112 @@ class PageService:
         self._audit(tenant.organization_id, tenant.user_id, "draft_updated", "page_revision", revision.id, {"page_slug": page_slug})
         self.db.commit()
 
+    def legal_documents_for_organization(
+        self,
+        organization_id: str,
+        *,
+        include_drafts: bool = False,
+    ) -> LegalDocuments:
+        values: dict[str, dict[str, object]] = {}
+        for field_name, (page_slug, _) in LEGAL_DOCUMENT_PAGES.items():
+            page = self.db.execute(
+                select(WebsitePage).where(
+                    WebsitePage.organization_id == organization_id,
+                    WebsitePage.slug == page_slug,
+                )
+            ).scalar_one_or_none()
+            enabled = bool(page and page.current_published_revision_id)
+            revision_id = (
+                page.current_draft_revision_id if include_drafts and page else page.current_published_revision_id if page else None
+            )
+            content = ""
+            if revision_id:
+                row = self.db.execute(
+                    select(PageSectionModel)
+                    .where(
+                        PageSectionModel.revision_id == revision_id,
+                        PageSectionModel.section_type == "rich_text",
+                    )
+                    .order_by(PageSectionModel.position.asc())
+                ).scalars().first()
+                if row:
+                    content = str((row.content_json or {}).get("markdown", "")).strip()
+            values[field_name] = {"enabled": enabled, "content": content}
+        return LegalDocuments.model_validate(values)
+
+    def update_legal_documents(self, tenant: TenantContext, documents: LegalDocuments) -> None:
+        for field_name, (page_slug, title) in LEGAL_DOCUMENT_PAGES.items():
+            document = getattr(documents, field_name)
+            page = self.db.execute(
+                select(WebsitePage).where(
+                    WebsitePage.organization_id == tenant.organization_id,
+                    WebsitePage.slug == page_slug,
+                )
+            ).scalar_one_or_none()
+            if not page:
+                page = WebsitePage(organization_id=tenant.organization_id, slug=page_slug, title=title)
+                self.db.add(page)
+                self.db.flush()
+
+            draft = self.db.get(PageRevision, page.current_draft_revision_id) if page.current_draft_revision_id else None
+            if not draft or draft.status != "draft":
+                draft = PageRevision(
+                    page_id=page.id,
+                    version_number=self._next_version(page.id),
+                    status="draft",
+                    created_by_user_id=tenant.user_id,
+                )
+                self.db.add(draft)
+                self.db.flush()
+                page.current_draft_revision_id = draft.id
+
+            sections = []
+            if document.content:
+                sections = validate_section_list(
+                    [
+                        {
+                            "id": str(uuid4()),
+                            "admin_label": title,
+                            "section_type": "rich_text",
+                            "position": 1,
+                            "is_visible": True,
+                            "variant": "article",
+                            "content_json": {"heading": title, "markdown": document.content},
+                        }
+                    ]
+                )
+            self._replace_revision_sections(draft.id, sections)
+
+            if page.current_published_revision_id:
+                self.db.execute(
+                    update(PageRevision)
+                    .where(PageRevision.id == page.current_published_revision_id)
+                    .values(status="archived")
+                )
+                page.current_published_revision_id = None
+
+            if document.enabled:
+                published = PageRevision(
+                    page_id=page.id,
+                    version_number=self._next_version(page.id),
+                    status="published",
+                    created_by_user_id=tenant.user_id,
+                    published_at=datetime.now(timezone.utc),
+                )
+                self.db.add(published)
+                self.db.flush()
+                self._replace_revision_sections(published.id, sections)
+                page.current_published_revision_id = published.id
+
+        self._audit(
+            tenant.organization_id,
+            tenant.user_id,
+            "legal_documents_updated",
+            "organization",
+            tenant.organization_id,
+            {"documents": list(LEGAL_DOCUMENT_PAGES)},
+        )
+
     def publish(self, tenant: TenantContext, page_slug: str, settings: Settings) -> PageRevision:
         page, draft = self._get_page_and_revision(tenant.organization_id, page_slug, draft=True)
         draft_sections = self._revision_sections(draft.id)
@@ -375,6 +487,9 @@ class PageService:
             if exc.status_code == status.HTTP_404_NOT_FOUND and page_slug in {"services", "about", "contact"}:
                 home_page, home_revision = self._get_page_and_revision(organization.id, "home", draft=False)
                 return self._derived_public_payload(home_page, home_revision, organization.slug, page_slug, public_base_url)
+            if exc.status_code == status.HTTP_404_NOT_FOUND and page_slug in {"privacy-policy", "terms-of-service", "nda-confidentiality"}:
+                home_page, home_revision = self._get_page_and_revision(organization.id, "home", draft=False)
+                return self._legal_public_payload(home_page, home_revision, organization.slug, page_slug, public_base_url)
             raise
 
     def public_by_host(self, hostname: str, page_slug: str, settings: Settings, scheme: str = "https") -> PublicSitePage:
@@ -400,6 +515,9 @@ class PageService:
             if exc.status_code == status.HTTP_404_NOT_FOUND and page_slug in {"services", "about", "contact"}:
                 home_page, home_revision = self._get_page_and_revision(organization.id, "home", draft=False)
                 return self._derived_public_payload(home_page, home_revision, organization.slug, page_slug, public_base_url)
+            if exc.status_code == status.HTTP_404_NOT_FOUND and page_slug in {"privacy-policy", "terms-of-service", "nda-confidentiality"}:
+                home_page, home_revision = self._get_page_and_revision(organization.id, "home", draft=False)
+                return self._legal_public_payload(home_page, home_revision, organization.slug, page_slug, public_base_url)
             raise
 
     def _organization_id_by_default_hostname(self, hostname: str, settings: Settings) -> str | None:
@@ -536,6 +654,10 @@ class PageService:
                 canonical_url=canonical,
             ),
             contact=contact,
+            legal_documents=self.legal_documents_for_organization(
+                page.organization_id,
+                include_drafts=revision.status != "published",
+            ),
             sections=[section for section in sections if section.is_visible] if revision.status == "published" else sections,
             published_at=revision.published_at or revision.created_at,
         )
@@ -573,6 +695,37 @@ class PageService:
                     canonical_url=f"{base_url}/{page_slug}",
                 ),
                 "sections": [section for section in payload.sections if section.section_type in allowed_types],
+            }
+        )
+
+    def _legal_public_payload(
+        self,
+        home_page: WebsitePage,
+        home_revision: PageRevision,
+        organization_slug: str,
+        page_slug: str,
+        public_base_url: str | None = None,
+    ) -> PublicSitePage:
+        payload = self._public_payload(home_page, home_revision, organization_slug, public_base_url)
+        documents = {
+            "privacy-policy": ("Privacy Policy", payload.legal_documents.privacy_policy),
+            "terms-of-service": ("Terms of Service", payload.legal_documents.terms_of_service),
+            "nda-confidentiality": ("NDA & Confidentiality Commitment", payload.legal_documents.nda_confidentiality),
+        }
+        title, document = documents[page_slug]
+        if not document.enabled or not document.content:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Legal document not found.")
+        base_url = public_base_url or f"http://localhost:3000/s/{organization_slug}"
+        return payload.model_copy(
+            update={
+                "page_slug": page_slug,
+                "page_title": title,
+                "seo": SeoPayload(
+                    title=f"{title} | {payload.firm_name}",
+                    description=f"{title} for {payload.firm_name}.",
+                    canonical_url=f"{base_url}/{page_slug}",
+                ),
+                "sections": [],
             }
         )
 

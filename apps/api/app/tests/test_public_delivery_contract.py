@@ -1,4 +1,7 @@
-from app.schemas.public import PublicSitePage
+import pytest
+from pydantic import ValidationError
+
+from app.schemas.public import LegalDocument, PublicSitePage
 from app.schemas.admin import CompanyDocumentCreate
 from app.services.page_service import build_seo_copy
 
@@ -8,7 +11,15 @@ def test_public_delivery_contract_has_no_admin_fields() -> None:
     assert "audit_logs" not in fields
     assert "current_draft_revision_id" not in fields
     assert "members" not in fields
-    assert {"sections", "seo", "contact", "published_at"}.issubset(fields)
+    assert {"sections", "seo", "contact", "legal_documents", "published_at"}.issubset(fields)
+
+
+def test_enabled_legal_document_requires_meaningful_text() -> None:
+    with pytest.raises(ValidationError, match="at least 20 characters"):
+        LegalDocument(enabled=True, content="Too short")
+
+    document = LegalDocument(enabled=True, content="This is a complete legal document introduction.")
+    assert document.enabled is True
 
 
 def test_company_document_defaults_to_app_storage() -> None:

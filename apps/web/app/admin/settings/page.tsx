@@ -1,12 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
-import { AlertCircle, CheckCircle2, Copy, ExternalLink, RefreshCw, Star, Trash2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { AlertCircle, CheckCircle2, Copy, ExternalLink, FileText, RefreshCw, Star, Trash2 } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { adminApi, type CustomDomain } from "@/lib/api/admin";
 import { resolveAdminWebsiteUrl } from "@/lib/admin/website-url";
 import { Button } from "@/components/ui/Button";
+import { EMPTY_LEGAL_DOCUMENTS } from "@/types/site";
+import type { LegalDocuments } from "@/types/site";
 
 export default function SettingsPage() {
   const queryClient = useQueryClient();
@@ -14,12 +16,37 @@ export default function SettingsPage() {
   const [actionError, setActionError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [isActionPending, setIsActionPending] = useState(false);
+  const [legalDocuments, setLegalDocuments] = useState<LegalDocuments>(EMPTY_LEGAL_DOCUMENTS);
   const meQuery = useQuery({ queryKey: ["admin-me"], queryFn: adminApi.me, retry: false });
   const domainsQuery = useQuery({ queryKey: ["admin-domains"], queryFn: adminApi.domains, retry: false });
   const organization = meQuery.data?.organization;
   const websiteUrl = organization ? resolveAdminWebsiteUrl(organization.default_url, organization.slug, organization.default_subdomain) : null;
   const platformDomain = domainsQuery.data?.find((domain) => domain.domain_type === "platform");
   const customDomains = domainsQuery.data?.filter((domain) => domain.domain_type === "custom") ?? [];
+
+  useEffect(() => {
+    if (organization?.legal_documents) {
+      setLegalDocuments(organization.legal_documents);
+    }
+  }, [organization?.legal_documents]);
+
+  function saveLegalDocuments() {
+    const invalid = Object.values(legalDocuments).some(
+      (document) => document.enabled && document.content.trim().length < 20
+    );
+    if (invalid) {
+      setActionError("Each enabled legal document must contain at least 20 characters.");
+      return;
+    }
+    runDomainAction(
+      () => adminApi.updateOrganization({ legal_documents: legalDocuments }),
+      "Legal documents saved. Enabled documents are now available in the website footer."
+    );
+  }
+
+  function updateLegalDocument(key: keyof LegalDocuments, value: LegalDocuments[keyof LegalDocuments]) {
+    setLegalDocuments((current) => ({ ...current, [key]: value }));
+  }
 
   function refreshDomains() {
     queryClient.invalidateQueries({ queryKey: ["admin-domains"] });
@@ -69,6 +96,44 @@ export default function SettingsPage() {
 
       {actionError ? <p className="rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">{actionError}</p> : null}
       {notice ? <p className="rounded-md border border-accent/30 bg-accent/10 p-3 text-sm text-accent">{notice}</p> : null}
+
+      <section className="rounded-lg border bg-card p-6">
+        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+          <div>
+            <div className="flex items-center gap-2">
+              <FileText className="text-secondary" size={20} />
+              <h2 className="text-lg font-semibold text-primary">Legal documents</h2>
+            </div>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
+              Write and publish the three legal documents shown in your website footer. Disabled documents stay private.
+            </p>
+          </div>
+          <Button type="button" onClick={saveLegalDocuments} disabled={isActionPending || meQuery.isLoading}>
+            {isActionPending ? "Saving..." : "Save legal documents"}
+          </Button>
+        </div>
+
+        <div className="mt-6 grid gap-5">
+          <LegalDocumentEditor
+            document={legalDocuments.privacy_policy}
+            label="Privacy Policy"
+            path="/privacy-policy"
+            onChange={(value) => updateLegalDocument("privacy_policy", value)}
+          />
+          <LegalDocumentEditor
+            document={legalDocuments.terms_of_service}
+            label="Terms of Service"
+            path="/terms-of-service"
+            onChange={(value) => updateLegalDocument("terms_of_service", value)}
+          />
+          <LegalDocumentEditor
+            document={legalDocuments.nda_confidentiality}
+            label="NDA & Confidentiality Commitment"
+            path="/nda-confidentiality"
+            onChange={(value) => updateLegalDocument("nda_confidentiality", value)}
+          />
+        </div>
+      </section>
 
       <section className="rounded-lg border bg-card p-6">
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
@@ -139,6 +204,49 @@ export default function SettingsPage() {
         </div>
       </section>
     </div>
+  );
+}
+
+function LegalDocumentEditor({
+  document,
+  label,
+  path,
+  onChange
+}: {
+  document: { enabled: boolean; content: string };
+  label: string;
+  path: string;
+  onChange: (document: { enabled: boolean; content: string }) => void;
+}) {
+  return (
+    <article className="rounded-md border bg-background p-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h3 className="font-semibold text-primary">{label}</h3>
+          <p className="mt-1 text-xs text-muted-foreground">{path}</p>
+        </div>
+        <label className="inline-flex cursor-pointer items-center gap-3 text-sm font-semibold">
+          <input
+            checked={document.enabled}
+            className="h-4 w-4 accent-secondary"
+            type="checkbox"
+            onChange={(event) => onChange({ ...document, enabled: event.target.checked })}
+          />
+          {document.enabled ? "Enabled" : "Disabled"}
+        </label>
+      </div>
+      <textarea
+        className="mt-4 min-h-56 w-full rounded-md border bg-card px-3 py-3 text-sm leading-7 outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20"
+        maxLength={20000}
+        placeholder={`Enter your ${label.toLowerCase()} text. Use blank lines to separate paragraphs.`}
+        value={document.content}
+        onChange={(event) => onChange({ ...document, content: event.target.value })}
+      />
+      <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
+        <span>{document.enabled ? "Visible in the public footer after saving." : "Hidden from the public website."}</span>
+        <span>{document.content.length.toLocaleString()} / 20,000</span>
+      </div>
+    </article>
   );
 }
 

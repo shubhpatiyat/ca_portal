@@ -25,4 +25,25 @@ describe("SectionRenderer", () => {
     expect(html).toContain("Services built around your business");
     expect(html).toContain("Accounts operations without the in-house overhead");
   });
+
+  it("renders enabled legal document text as a dedicated page", () => {
+    const legalPage = {
+      ...demoPage,
+      page_slug: "privacy-policy",
+      page_title: "Privacy Policy",
+      legal_documents: {
+        ...demoPage.legal_documents,
+        privacy_policy: {
+          enabled: true,
+          content: "We collect only the information needed to provide our services.\n\nWe protect client records."
+        }
+      },
+      sections: []
+    };
+    const html = renderToStaticMarkup(<SectionRenderer page={legalPage} />);
+
+    expect(html).toContain("Privacy Policy");
+    expect(html).toContain("We collect only the information needed");
+    expect(html).toContain("We protect client records.");
+  });
 });

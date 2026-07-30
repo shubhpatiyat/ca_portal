@@ -40,6 +40,7 @@ import type {
   TrustStatsSection
 } from "@/types/site";
 import { LeadForm } from "@/components/public/LeadForm";
+import { isLegalPageSlug, LegalDocumentPage } from "@/components/public/LegalDocumentPage";
 
 type SectionProps<T extends PageSection> = {
   section: T;
@@ -526,6 +527,9 @@ function PageIntro({ page }: { page: PublicSitePage }) {
 }
 
 export function SectionRenderer({ page }: { page: PublicSitePage }) {
+  if (isLegalPageSlug(page.page_slug)) {
+    return <LegalDocumentPage page={page} />;
+  }
   const visibleSections = page.sections
     .filter((section) => section.is_visible)
     .sort((a, b) => a.position - b.position);

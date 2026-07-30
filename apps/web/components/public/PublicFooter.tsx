@@ -1,4 +1,5 @@
 import { ArrowUpRight, Mail, Phone } from "lucide-react";
+import { EMPTY_LEGAL_DOCUMENTS } from "@/types/site";
 import type { PublicSitePage } from "@/types/site";
 
 const quickLinks = [
@@ -10,7 +11,15 @@ const quickLinks = [
   ["Careers", "#contact"]
 ] as const;
 
-export function PublicFooter({ page }: { page: PublicSitePage }) {
+export function PublicFooter({ page, basePath }: { page: PublicSitePage; basePath?: string }) {
+  const base = basePath ?? `/s/${page.organization_slug}`;
+  const homePath = base || "/";
+  const documents = page.legal_documents ?? EMPTY_LEGAL_DOCUMENTS;
+  const legalLinks = [
+    { label: "Privacy Policy", href: `${base}/privacy-policy`, document: documents.privacy_policy },
+    { label: "Terms of Service", href: `${base}/terms-of-service`, document: documents.terms_of_service },
+    { label: "NDA & Confidentiality Commitment", href: `${base}/nda-confidentiality`, document: documents.nda_confidentiality }
+  ].filter((item) => item.document.enabled && item.document.content.trim());
   return (
     <footer className="bg-[#0b1f33] text-white">
       <div className="section-shell py-14 sm:py-16">
@@ -42,26 +51,28 @@ export function PublicFooter({ page }: { page: PublicSitePage }) {
             <h2 className="text-sm font-bold">Quick Links</h2>
             <div className="mt-5 grid grid-cols-2 gap-x-6 gap-y-3 text-sm text-white/60 md:grid-cols-1">
               {quickLinks.map(([label, href]) => (
-                <a className="transition hover:text-white" href={href} key={label}>
+                <a className="transition hover:text-white" href={`${homePath}${href}`} key={label}>
                   {label}
                 </a>
               ))}
             </div>
           </div>
 
-          <div>
-            <h2 className="text-sm font-bold">Legal</h2>
-            <div className="mt-5 grid gap-3 text-sm text-white/60">
-              <a className="transition hover:text-white" href="#contact">Privacy Policy</a>
-              <a className="transition hover:text-white" href="#contact">Terms of Service</a>
-              <a className="transition hover:text-white" href="#security">NDA &amp; Confidentiality Commitment</a>
+          {legalLinks.length ? (
+            <div>
+              <h2 className="text-sm font-bold">Legal</h2>
+              <div className="mt-5 grid gap-3 text-sm text-white/60">
+                {legalLinks.map((item) => (
+                  <a className="transition hover:text-white" href={item.href} key={item.label}>{item.label}</a>
+                ))}
+              </div>
             </div>
-          </div>
+          ) : null}
         </div>
 
         <div className="flex flex-col gap-5 pt-8 text-xs text-white/50 sm:flex-row sm:items-center sm:justify-between">
           <p>© {new Date().getFullYear()} {page.firm_name}. All rights reserved.</p>
-          <a className="inline-flex items-center gap-1.5 font-bold text-[#8bc5ff] transition hover:text-white" href="#contact">
+          <a className="inline-flex items-center gap-1.5 font-bold text-[#8bc5ff] transition hover:text-white" href={`${homePath}#contact`}>
             Book a Free Consultation
             <ArrowUpRight size={14} aria-hidden="true" />
           </a>

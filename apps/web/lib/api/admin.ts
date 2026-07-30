@@ -1,4 +1,4 @@
-import type { PageSection, PublicSitePage, TemplateKey, ThemeKey } from "@/types/site";
+import type { LegalDocuments, PageSection, PublicSitePage, TemplateKey, ThemeKey } from "@/types/site";
 import { createBrowserSupabaseClient, getSupabaseAccessToken } from "@/lib/auth/supabase";
 
 export type AdminUser = {
@@ -17,6 +17,7 @@ export type AdminOrganization = {
   theme_key: ThemeKey;
   default_subdomain?: string | null;
   default_url?: string | null;
+  legal_documents: LegalDocuments;
 };
 
 export type Lead = {
@@ -256,6 +257,7 @@ export const adminApi = {
     contact_whatsapp?: string;
     contact_email?: string;
     contact_address?: string;
+    legal_documents?: LegalDocuments;
   }) =>
     request<AdminOrganization>("/api/v1/admin/organization", {
       method: "PATCH",

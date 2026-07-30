@@ -22,6 +22,11 @@ export const demoPage: PublicSitePage = {
     email: "office@example.com",
     address: "Your office address"
   },
+  legal_documents: {
+    privacy_policy: { enabled: false, content: "" },
+    terms_of_service: { enabled: false, content: "" },
+    nda_confidentiality: { enabled: false, content: "" }
+  },
   sections: [
     {
       id: "hero-home",

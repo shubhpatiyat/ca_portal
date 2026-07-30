@@ -170,7 +170,7 @@ class ContactFormSection(SectionBase):
 
 class RichTextContent(BaseModel):
     heading: ShortText
-    markdown: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=5000)]
+    markdown: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=20000)]
 
     @field_validator("markdown")
     @classmethod

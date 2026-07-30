@@ -15,7 +15,15 @@ type PageProps = {
   }>;
 };
 
-const publicPages = new Set(["home", "services", "about", "contact"]);
+const publicPages = new Set([
+  "home",
+  "services",
+  "about",
+  "contact",
+  "privacy-policy",
+  "terms-of-service",
+  "nda-confidentiality"
+]);
 
 function normalizePageSlug(pageSlug?: string[]): string | null {
   if (!pageSlug?.length) {
@@ -71,7 +79,7 @@ export default async function HostTenantSitePage({ params }: PageProps) {
         <main>
           <SectionRenderer page={page} />
         </main>
-        <PublicFooter page={page} />
+        <PublicFooter page={page} basePath="" />
       </div>
     );
   } catch {

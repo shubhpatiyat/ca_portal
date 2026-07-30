@@ -5,6 +5,7 @@ from pydantic import BaseModel, EmailStr, Field, StringConstraints
 from typing_extensions import Annotated
 
 from app.schemas.sections import PageSection
+from app.schemas.public import LegalDocuments
 
 
 Role = Literal["owner", "editor", "viewer"]
@@ -27,6 +28,7 @@ class OrganizationOut(BaseModel):
     theme_key: Literal["navy_gold", "emerald_cream", "charcoal_blue"] = "navy_gold"
     default_subdomain: str | None = None
     default_url: str | None = None
+    legal_documents: LegalDocuments = Field(default_factory=LegalDocuments)
 
 
 class MeOut(BaseModel):
@@ -43,6 +45,7 @@ class OrganizationUpdate(BaseModel):
     contact_whatsapp: Annotated[str, StringConstraints(strip_whitespace=True, min_length=8, max_length=120)] | None = None
     contact_email: EmailStr | None = None
     contact_address: Annotated[str, StringConstraints(strip_whitespace=True, min_length=8, max_length=240)] | None = None
+    legal_documents: LegalDocuments | None = None
 
 
 class CustomDomainCreate(BaseModel):

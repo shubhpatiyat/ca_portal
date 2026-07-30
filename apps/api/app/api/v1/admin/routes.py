@@ -157,6 +157,10 @@ def organization_out(
         theme_key=config.theme_key if config else "navy_gold",
         default_subdomain=default_subdomain,
         default_url=default_url,
+        legal_documents=PageService(db).legal_documents_for_organization(
+            tenant.organization_id,
+            include_drafts=True,
+        ),
     )
 
 
@@ -371,8 +375,22 @@ def update_organization(
             config.contact_email = str(payload.contact_email)
         if payload.contact_address is not None:
             config.contact_address = payload.contact_address
+    if payload.legal_documents is not None:
+        PageService(db).update_legal_documents(tenant, payload.legal_documents)
     db.commit()
-    PageService(db)._notify_revalidation(settings, tenant.organization_id, ["home", "services", "about", "contact"])
+    PageService(db)._notify_revalidation(
+        settings,
+        tenant.organization_id,
+        [
+            "home",
+            "services",
+            "about",
+            "contact",
+            "privacy-policy",
+            "terms-of-service",
+            "nda-confidentiality",
+        ],
+    )
     return organization_out(db, tenant, settings, organization)
 
 

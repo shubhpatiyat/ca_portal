@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel, EmailStr, Field, StringConstraints
+from pydantic import BaseModel, EmailStr, Field, StringConstraints, model_validator
 from typing_extensions import Annotated
 
 from app.schemas.sections import PageSection
@@ -20,6 +20,23 @@ class SeoPayload(BaseModel):
     canonical_url: str
 
 
+class LegalDocument(BaseModel):
+    enabled: bool = False
+    content: Annotated[str, StringConstraints(strip_whitespace=True, max_length=20000)] = ""
+
+    @model_validator(mode="after")
+    def enabled_document_has_content(self) -> "LegalDocument":
+        if self.enabled and len(self.content) < 20:
+            raise ValueError("Enabled legal documents must contain at least 20 characters.")
+        return self
+
+
+class LegalDocuments(BaseModel):
+    privacy_policy: LegalDocument = Field(default_factory=LegalDocument)
+    terms_of_service: LegalDocument = Field(default_factory=LegalDocument)
+    nda_confidentiality: LegalDocument = Field(default_factory=LegalDocument)
+
+
 class PublicSitePage(BaseModel):
     organization_id: str
     organization_slug: str
@@ -31,6 +48,7 @@ class PublicSitePage(BaseModel):
     page_title: str
     seo: SeoPayload
     contact: ContactDetails
+    legal_documents: LegalDocuments = Field(default_factory=LegalDocuments)
     sections: list[PageSection]
     published_at: datetime
 

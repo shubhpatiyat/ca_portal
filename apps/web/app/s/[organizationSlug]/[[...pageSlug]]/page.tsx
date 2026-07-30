@@ -30,7 +30,7 @@ export default async function TenantSitePage({ params }: PageProps) {
   const resolved = await params;
   const pageSlug = normalizePageSlug(resolved.pageSlug);
 
-  if (!["home", "services", "about", "contact"].includes(pageSlug)) {
+  if (!["home", "services", "about", "contact", "privacy-policy", "terms-of-service", "nda-confidentiality"].includes(pageSlug)) {
     notFound();
   }
 
